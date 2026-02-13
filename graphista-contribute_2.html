@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRAPHISTA — Contribute</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap');
+:root{
+  --bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;
+  --border:#1e1e1e;--border2:#2a2a2a;--border3:#333;
+  --tx:#d0d0d0;--tx2:#888;--tx3:#555;--tx4:#333;
+  --white:#eee;--green:#00ff88;--gdim:#00ff8822;
+  --red:#ff4444;--blue:#4488ff;--yellow:#ffcc00;--purple:#aa66ff;--cyan:#00dddd;--orange:#ff8844;--pink:#ff66aa;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+::selection{background:#00ff8833;color:#fff}
+body{font-family:var(--mono);background:var(--bg);color:var(--tx);-webkit-font-smoothing:antialiased}
+
+/* LOADER */
+.loader{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s,visibility .8s}
+.loader.done{opacity:0;visibility:hidden;pointer-events:none}
+.loader-grid{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 59px,#0d0d0d 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,#0d0d0d 60px);opacity:.3}
+.loader-inner{position:relative;z-index:1;text-align:center}
+.loader-logo{font:800 32px var(--mono);color:var(--green);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;opacity:0;animation:lfu .5s .2s ease forwards}
+.loader-sub{font:400 11px var(--mono);color:var(--tx3);letter-spacing:.06em;margin-bottom:20px;opacity:0;animation:lfu .4s .5s ease forwards}
+.loader-spinner{width:40px;height:40px;border:2px solid var(--border2);border-top-color:var(--green);border-radius:50%;margin:0 auto;animation:spin 1s linear infinite,lfu .3s .6s ease forwards;opacity:0}
+@keyframes lfu{to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* LAYOUT */
+.app{opacity:0;transition:opacity .5s}
+.app.ready{opacity:1}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:42px;border-bottom:1px solid var(--border);background:rgba(10,10,10,.92);backdrop-filter:blur(12px)}
+.tl{display:flex;align-items:center;gap:10px}
+.tt{font:700 11px var(--mono);color:var(--green);letter-spacing:.1em;text-transform:uppercase;text-decoration:none}
+.tc{font:400 9px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.04em}
+.tr{display:flex;align-items:center;gap:8px}
+.tb{display:flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--border2);background:0;font:600 9px var(--mono);color:var(--tx2);cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:.04em;text-decoration:none;white-space:nowrap}
+.tb:hover{border-color:var(--green);color:var(--white);background:var(--bg3)}
+.tb.p{border-color:var(--green);color:var(--green)}
+.tb.p:hover{background:var(--green);color:var(--bg)}
+
+/* HERO */
+.hero{padding:60px 24px 40px;max-width:1100px;margin:0 auto;text-align:center}
+.hero-tag{font:600 8px var(--mono);color:var(--green);text-transform:uppercase;letter-spacing:.15em;margin-bottom:12px;display:inline-flex;align-items:center;gap:6px}
+.hero-tag::before,.hero-tag::after{content:'';width:20px;height:1px;background:var(--green);opacity:.4}
+.hero h1{font:800 36px var(--mono);color:var(--white);letter-spacing:.05em;margin-bottom:12px;text-transform:uppercase}
+.hero h1 span{color:var(--green)}
+.hero p{font:400 12px var(--mono);color:var(--tx2);max-width:640px;margin:0 auto;line-height:1.8}
+
+/* STATS BAR */
+.stats-bar{display:flex;justify-content:center;gap:32px;padding:24px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg2);margin-bottom:40px}
+.stat{text-align:center}
+.stat-val{font:700 22px var(--mono);color:var(--green);display:block}
+.stat-label{font:400 7px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+@keyframes countUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.stat{animation:countUp .5s ease forwards;opacity:0}
+.stat:nth-child(1){animation-delay:.2s}
+.stat:nth-child(2){animation-delay:.3s}
+.stat:nth-child(3){animation-delay:.4s}
+.stat:nth-child(4){animation-delay:.5s}
+.stat:nth-child(5){animation-delay:.6s}
+
+/* MAIN CONTENT */
+.content{max-width:1100px;margin:0 auto;padding:0 24px 60px;display:grid;grid-template-columns:1fr 340px;gap:24px}
+@media(max-width:900px){.content{grid-template-columns:1fr}}
+
+/* SECTION HEADERS */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.section-head h2{font:600 9px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:6px}
+.section-head h2::before{content:'';width:3px;height:12px;background:var(--green)}
+.section-head .badge{font:500 7px var(--mono);color:var(--green);border:1px solid var(--green);padding:2px 6px;text-transform:uppercase;letter-spacing:.06em}
+
+/* OPEN ISSUES / BOUNTIES */
+.issue{border:1px solid var(--border2);padding:14px 16px;margin-bottom:8px;transition:all .15s;cursor:pointer;position:relative;overflow:hidden}
+.issue::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;transition:background .15s}
+.issue:hover{border-color:var(--border3);background:var(--bg2)}
+.issue:hover::before{background:var(--green)}
+.issue-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.issue-title{font:600 11px var(--mono);color:var(--white);display:flex;align-items:center;gap:8px}
+.issue-id{font:400 9px var(--mono);color:var(--tx4)}
+.issue-labels{display:flex;gap:4px}
+.il{font:500 7px var(--mono);padding:2px 6px;text-transform:uppercase;letter-spacing:.04em;border:1px solid}
+.il-feat{color:var(--cyan);border-color:var(--cyan)}
+.il-bug{color:var(--red);border-color:var(--red)}
+.il-docs{color:var(--yellow);border-color:var(--yellow)}
+.il-perf{color:var(--orange);border-color:var(--orange)}
+.il-core{color:var(--green);border-color:var(--green)}
+.il-bounty{color:var(--bg);background:var(--green);border-color:var(--green)}
+.il-good-first{color:var(--bg);background:var(--blue);border-color:var(--blue)}
+.issue-desc{font:400 9px var(--mono);color:var(--tx2);line-height:1.6;margin-bottom:8px}
+.issue-meta{display:flex;align-items:center;gap:12px;font:400 8px var(--mono);color:var(--tx4)}
+.issue-meta .green{color:var(--green)}
+
+/* RECENT ACTIVITY */
+.activity{margin-bottom:24px}
+.act-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.act-avatar{width:28px;height:28px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font:600 9px var(--mono);color:var(--green);flex-shrink:0}
+.act-content{flex:1;min-width:0}
+.act-user{font:600 9px var(--mono);color:var(--cyan)}
+.act-text{font:400 8px var(--mono);color:var(--tx2);line-height:1.5;margin-top:2px}
+.act-text .highlight{color:var(--green)}
+.act-text .file{color:var(--yellow)}
+.act-time{font:400 7px var(--mono);color:var(--tx4);margin-top:3px}
+
+/* CONTRIBUTORS */
+.contributors{margin-bottom:24px}
+.contrib-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.contrib{border:1px solid var(--border2);padding:10px 12px;display:flex;align-items:center;gap:10px;transition:all .15s;cursor:pointer}
+.contrib:hover{border-color:var(--green);background:var(--bg2)}
+.contrib-avatar{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border3);display:flex;align-items:center;justify-content:center;font:700 11px var(--mono);flex-shrink:0}
+.contrib-info{min-width:0}
+.contrib-name{font:600 9px var(--mono);color:var(--white);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.contrib-stats{font:400 7px var(--mono);color:var(--tx3)}
+.contrib-stats .green{color:var(--green)}
+
+/* LEADERBOARD */
+.leaderboard{margin-bottom:24px}
+.lb-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border2);margin-bottom:4px;transition:all .15s}
+.lb-item:hover{border-color:var(--border3);background:var(--bg2)}
+.lb-rank{font:700 14px var(--mono);color:var(--tx4);width:24px;text-align:center}
+.lb-item:nth-child(1) .lb-rank{color:var(--green)}
+.lb-item:nth-child(2) .lb-rank{color:var(--cyan)}
+.lb-item:nth-child(3) .lb-rank{color:var(--yellow)}
+.lb-avatar{width:24px;height:24px;border-radius:50%;background:var(--bg3);border:1px solid var(--border3);display:flex;align-items:center;justify-content:center;font:600 8px var(--mono);flex-shrink:0}
+.lb-name{font:500 9px var(--mono);color:var(--white);flex:1}
+.lb-score{font:600 9px var(--mono);color:var(--green)}
+.lb-bar{flex:0 0 60px;height:4px;background:var(--border);overflow:hidden}
+.lb-bar .fill{height:100%;background:var(--green);transition:width 1s ease}
+
+/* PR LIST */
+.pr{border:1px solid var(--border2);padding:12px 14px;margin-bottom:6px;transition:all .15s}
+.pr:hover{border-color:var(--border3);background:var(--bg2)}
+.pr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.pr-title{font:500 10px var(--mono);color:var(--white);display:flex;align-items:center;gap:6px}
+.pr-status{font:500 7px var(--mono);padding:2px 6px;text-transform:uppercase;letter-spacing:.04em}
+.pr-merged{color:var(--bg);background:var(--purple)}
+.pr-open{color:var(--green);border:1px solid var(--green)}
+.pr-review{color:var(--yellow);border:1px solid var(--yellow)}
+.pr-meta{font:400 8px var(--mono);color:var(--tx3)}
+.pr-meta .user{color:var(--cyan)}
+.pr-files{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.pr-file{font:400 7px var(--mono);color:var(--yellow);background:var(--bg3);padding:1px 5px;border:1px solid var(--border2)}
+.pr-diff{display:flex;gap:8px;font:500 8px var(--mono)}
+.pr-diff .add{color:var(--green)}
+.pr-diff .del{color:var(--red)}
+
+/* HOW TO CONTRIBUTE */
+.how-to{margin-bottom:24px}
+.step{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.step-num{width:28px;height:28px;border:1px solid var(--green);display:flex;align-items:center;justify-content:center;font:700 11px var(--mono);color:var(--green);flex-shrink:0}
+.step-content h3{font:600 10px var(--mono);color:var(--white);margin-bottom:4px}
+.step-content p{font:400 8px var(--mono);color:var(--tx2);line-height:1.6}
+.step-content code{color:var(--green);background:var(--bg3);padding:1px 4px;font-size:8px}
+
+/* COMMIT GRAPH */
+.commit-graph{margin-bottom:24px}
+.cg-grid{display:flex;gap:2px;flex-wrap:wrap}
+.cg-cell{width:10px;height:10px;background:var(--border);transition:all .2s;cursor:pointer;position:relative}
+.cg-cell:hover{transform:scale(1.5);z-index:2}
+.cg-cell.l1{background:#003d20}.cg-cell.l2{background:#006633}.cg-cell.l3{background:#009944}.cg-cell.l4{background:#00ff88}
+.cg-months{display:flex;gap:2px;margin-bottom:4px}
+.cg-month{font:400 7px var(--mono);color:var(--tx4);width:46px;text-align:center}
+
+/* LIVE TERMINAL */
+.terminal{background:var(--bg);border:1px solid var(--border2);margin-bottom:24px;overflow:hidden}
+.term-bar{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg3);border-bottom:1px solid var(--border)}
+.term-dot{width:6px;height:6px;border-radius:50%}
+.term-bar span{font:500 8px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.06em}
+.term-body{padding:10px;max-height:200px;overflow-y:auto;font:400 9px var(--mono);line-height:1.8}
+.term-line{display:block;animation:termIn .3s ease}
+@keyframes termIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+.term-line .prompt{color:var(--green)}.term-line .cmd{color:var(--white)}.term-line .out{color:var(--tx2)}.term-line .err{color:var(--red)}.term-line .ok{color:var(--green)}.term-line .warn{color:var(--yellow)}.term-line .file{color:var(--cyan)}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center}
+.footer p{font:400 8px var(--mono);color:var(--tx4);line-height:1.8}
+.footer a{color:var(--green);text-decoration:none}
+.footer a:hover{text-decoration:underline}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border3)}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="loader-grid"></div>
+  <div class="loader-inner">
+    <div class="loader-logo">GRAPHISTA</div>
+    <div class="loader-sub">Loading Contributor Hub...</div>
+    <div class="loader-spinner"></div>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="tl">
+      <a class="tt" href="graph_final.html">graphista</a>
+      <span style="color:var(--tx4)">//</span>
+      <span class="tc">contribute</span>
+    </div>
+    <div class="tr">
+      <a class="tb" href="graph_final.html">Dashboard</a>
+      <a class="tb" href="graphista-visualizer.html">Visualizer</a>
+      <a class="tb" href="graphista-docs.html">Docs</a>
+      <a class="tb p" href="https://github.com/pippinlovesyou/graphista" target="_blank">⭐ Star on GitHub</a>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-tag">Open Source</div>
+    <h1>Build the <span>Memory Layer</span></h1>
+    <p>Graphista is MIT-licensed and built by the community. Whether you're fixing a bug, adding a feature, or improving docs — every contribution makes AI memory better for everyone.</p>
+  </div>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat"><span class="stat-val" id="statStars">42</span><span class="stat-label">GitHub Stars</span></div>
+    <div class="stat"><span class="stat-val" id="statForks">8</span><span class="stat-label">Forks</span></div>
+    <div class="stat"><span class="stat-val" id="statContribs">1</span><span class="stat-label">Contributors</span></div>
+    <div class="stat"><span class="stat-val" id="statPRs">0</span><span class="stat-label">Pull Requests</span></div>
+    <div class="stat"><span class="stat-val" id="statCommits">147</span><span class="stat-label">Commits</span></div>
+  </div>
+
+  <div class="content">
+    <div class="main-col">
+
+      <!-- HOW TO CONTRIBUTE -->
+      <div class="how-to">
+        <div class="section-head"><h2>How to Contribute</h2></div>
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h3>Fork & Clone</h3>
+            <p>Fork the repo on GitHub and clone it locally. <code>git clone https://github.com/YOUR_USERNAME/graphista.git</code></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h3>Pick an Issue</h3>
+            <p>Browse open issues below. Look for <code>good-first-issue</code> labels if you're new. Bounty issues have token rewards.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <h3>Branch & Build</h3>
+            <p>Create a feature branch: <code>git checkout -b feat/your-feature</code> — Write clean code, add tests, update docs.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <h3>Submit PR</h3>
+            <p>Push your branch, open a PR against <code>main</code>. Describe what you changed and why. We review within 24-48h.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPEN ISSUES -->
+      <div class="section-head"><h2>Open Issues</h2><span class="badge">12 Open</span></div>
+
+      <div class="issue" onclick="this.style.borderColor='var(--green)'">
+        <div class="issue-top">
+          <div class="issue-title"><span class="issue-id">#142</span> Multi-agent shared memory graphs</div>
+          <div class="issue-labels"><span class="il il-feat">feature</span><span class="il il-bounty">500K tokens</span></div>
+        </div>
+        <div class="issue-desc">Implement shared memory graphs that allow multiple AI agents to read/write to the same graph with conflict resolution. Needs CRDT-based merge strategy for concurrent writes.</div>
+        <div class="issue-meta"><span>opened 2d ago by <span class="green">@pippin-core</span></span><span>💬 8</span><span>👍 23</span></div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-top">
+          <div class="issue-title"><span class="issue-id">#139</span> GraphQL API for external queries</div>
+          <div class="issue-labels"><span class="il il-feat">feature</span><span class="il il-core">core</span></div>
+        </div>
+        <div class="issue-desc">Expose the memory graph via a GraphQL endpoint so external apps can query Graphista without using the Python SDK. Schema design needed.</div>
+        <div class="issue-meta"><span>opened 4d ago by <span class="green">@pippin-core</span></span><span>💬 12</span><span>👍 31</span></div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-top">
+          <div class="issue-title"><span class="issue-id">#137</span> Memory decay and relevance scoring</div>
+          <div class="issue-labels"><span class="il il-feat">feature</span><span class="il il-bounty">250K tokens</span></div>
+        </div>
+        <div class="issue-desc">Implement time-based decay on memory nodes. Frequently accessed nodes stay strong, rarely accessed ones fade. Configurable decay curves.</div>
+        <div class="issue-meta"><span>opened 5d ago by <span class="green">@pippin-core</span></span><span>💬 6</span><span>👍 18</span></div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-top">
+          <div class="issue-title"><span class="issue-id">#134</span> Edge weight visualization broken on large graphs</div>
+          <div class="issue-labels"><span class="il il-bug">bug</span><span class="il il-good-first">good first issue</span></div>
+        </div>
+        <div class="issue-desc">When graph exceeds 500 nodes, edge weight rendering causes frame drops. Need to implement LOD (level of detail) culling for distant edges.</div>
+        <div class="issue-meta"><span>opened 1w ago by <span class="green">@devnull_42</span></span><span>💬 4</span><span>👍 9</span></div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-top">
+          <div class="issue-title"><span class="issue-id">#131</span> Add Rust bindings for graph engine</div>
+          <div class="issue-labels"><span class="il il-feat">feature</span><span class="il il-perf">performance</span></div>
+        </div>
+        <div class="issue-desc">Port the core graph traversal engine to Rust via PyO3 for 10-50x performance improvement on large graph queries. Python API stays the same.</div>
+        <div class="issue-meta"><span>opened 1w ago by <span class="green">@rustacean_sol</span></span><span>💬 15</span><span>👍 42</span></div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-top">
+          <div class="issue-title"><span class="issue-id">#128</span> Improve ingestion docs with examples</div>
+          <div class="issue-labels"><span class="il il-docs">docs</span><span class="il il-good-first">good first issue</span></div>
+        </div>
+        <div class="issue-desc">Current ingestion docs lack real-world examples. Add cookbook-style guides for: chat logs, PDF documents, API responses, and code repositories.</div>
+        <div class="issue-meta"><span>opened 2w ago by <span class="green">@doc_wizard</span></span><span>💬 3</span><span>👍 14</span></div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-top">
+          <div class="issue-title"><span class="issue-id">#125</span> Solana on-chain memory anchoring</div>
+          <div class="issue-labels"><span class="il il-feat">feature</span><span class="il il-bounty">1M tokens</span></div>
+        </div>
+        <div class="issue-desc">Anchor memory graph hashes on-chain for verifiable, tamper-proof memory. Merkle tree of node states committed to Solana at configurable intervals.</div>
+        <div class="issue-meta"><span>opened 2w ago by <span class="green">@pippin-core</span></span><span>💬 21</span><span>👍 67</span></div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-top">
+          <div class="issue-title"><span class="issue-id">#122</span> Streaming ingestion pipeline</div>
+          <div class="issue-labels"><span class="il il-feat">feature</span><span class="il il-core">core</span></div>
+        </div>
+        <div class="issue-desc">Support real-time streaming ingestion via WebSocket. Currently ingestion is batch-only. Need async pipeline with backpressure handling.</div>
+        <div class="issue-meta"><span>opened 3w ago by <span class="green">@stream_dev</span></span><span>💬 7</span><span>👍 28</span></div>
+      </div>
+
+      <!-- RECENT PRs -->
+      <div class="section-head" style="margin-top:32px"><h2>Pull Requests</h2><span class="badge">0 Open</span></div>
+      <div style="border:1px dashed var(--border2);padding:24px;text-align:center;margin-bottom:8px">
+        <div style="font:600 10px var(--mono);color:var(--tx3);margin-bottom:4px">No pull requests yet</div>
+        <div style="font:400 8px var(--mono);color:var(--tx4)">Be the first to contribute — pick an issue above and submit a PR</div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="side-col">
+
+      <!-- LIVE TERMINAL -->
+      <div class="terminal">
+        <div class="term-bar">
+          <div class="term-dot" style="background:var(--red)"></div>
+          <div class="term-dot" style="background:var(--yellow)"></div>
+          <div class="term-dot" style="background:var(--green)"></div>
+          <span>CI/CD Pipeline</span>
+        </div>
+        <div class="term-body" id="termBody"></div>
+      </div>
+
+      <!-- COMMIT GRAPH -->
+      <div class="commit-graph">
+        <div class="section-head"><h2>Commit Activity</h2></div>
+        <div class="cg-months" id="cgMonths"></div>
+        <div class="cg-grid" id="cgGrid"></div>
+      </div>
+
+
+      <!-- RECENT ACTIVITY -->
+      <div class="activity">
+        <div class="section-head"><h2>Recent Activity</h2></div>
+        <div id="actFeed"></div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>GRAPHISTA is MIT licensed · Built by <a href="https://x.com/i/communities/2022344299363643738" target="_blank">Pippin</a> · <a href="https://github.com/pippinlovesyou/graphista" target="_blank">GitHub</a> · CA: E7AaqmGaPsYxBzWERpgigt75nNs99eZEBUjKYA3cpump</p>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+const CONTRIBUTORS = [
+  { name:'pippin-dev', commits:147, prs:0, color:'#00ff88' },
+];
+
+const ACTIVITIES = [
+  { user:'pippin-dev', text:'pushed initial commit to <span class="file">core/graph.py</span>', time:'2 hours ago' },
+  { user:'pippin-dev', text:'created issue <span class="highlight">#142</span> — multi-agent memory', time:'3 hours ago' },
+  { user:'pippin-dev', text:'deployed <span class="highlight">v2.1.0</span> to production', time:'5 hours ago' },
+  { user:'pippin-dev', text:'added <span class="file">docs/quickstart.md</span>', time:'6 hours ago' },
+  { user:'pippin-dev', text:'initialized repository', time:'1 day ago' },
+];
+
+const TERM_LINES = [
+  { text:'<span class="prompt">$</span> <span class="cmd">git push origin feat/cache-warming</span>' },
+  { text:'<span class="out">Enumerating objects: 12, done.</span>' },
+  { text:'<span class="out">Compressing objects: 100% (8/8), done.</span>' },
+  { text:'<span class="ok">✓ Branch pushed to origin/feat/cache-warming</span>' },
+  { text:'<span class="prompt">$</span> <span class="cmd">graphista test --coverage</span>' },
+  { text:'<span class="out">Running 247 tests...</span>' },
+  { text:'<span class="ok">✓ 247 passed</span> <span class="warn">⚠ 0 warnings</span> <span class="err">✗ 0 failed</span>' },
+  { text:'<span class="out">Coverage: <span class="ok">94.2%</span> (target: 90%)</span>' },
+  { text:'<span class="prompt">$</span> <span class="cmd">graphista bench traverse --nodes=10000</span>' },
+  { text:'<span class="out">Graph loaded: 10,000 nodes, 34,721 edges</span>' },
+  { text:'<span class="out">Avg traversal: <span class="ok">8.3ms</span> (depth=5)</span>' },
+  { text:'<span class="out">Cache hit rate: <span class="ok">96.1%</span></span>' },
+  { text:'<span class="ok">✓ All benchmarks within threshold</span>' },
+  { text:'<span class="prompt">$</span> <span class="cmd">graphista deploy --env=staging</span>' },
+  { text:'<span class="out">Building container...</span>' },
+  { text:'<span class="out">Deploying to staging cluster...</span>' },
+  { text:'<span class="ok">✓ Deployed graphista:v2.1.4-rc.2 to staging</span>' },
+  { text:'<span class="out">Health check: <span class="ok">PASSING</span></span>' },
+  { text:'<span class="prompt">$</span> <span class="cmd">graphista lint --strict</span>' },
+  { text:'<span class="ok">✓ No issues found in 48 files</span>' },
+];
+
+// ===== BUILD UI =====
+function buildLeaderboard() {
+  const el = document.getElementById('lbList');
+  const max = CONTRIBUTORS[0].commits;
+  CONTRIBUTORS.slice(0, 8).forEach((c, i) => {
+    const pct = (c.commits / max * 100).toFixed(0);
+    el.innerHTML += `
+      <div class="lb-item">
+        <div class="lb-rank">${i + 1}</div>
+        <div class="lb-avatar" style="color:${c.color}">${c.name[0].toUpperCase()}</div>
+        <div class="lb-name">@${c.name}</div>
+        <div class="lb-bar"><div class="fill" style="width:${pct}%"></div></div>
+        <div class="lb-score">${c.commits}</div>
+      </div>`;
+  });
+}
+
+function buildActivity() {
+  const el = document.getElementById('actFeed');
+  ACTIVITIES.forEach(a => {
+    el.innerHTML += `
+      <div class="act-item">
+        <div class="act-avatar">${a.user[0].toUpperCase()}</div>
+        <div class="act-content">
+          <div class="act-user">@${a.user}</div>
+          <div class="act-text">${a.text}</div>
+          <div class="act-time">${a.time}</div>
+        </div>
+      </div>`;
+  });
+}
+
+function buildContributors() {
+  const el = document.getElementById('contribGrid');
+  CONTRIBUTORS.forEach(c => {
+    el.innerHTML += `
+      <div class="contrib">
+        <div class="contrib-avatar" style="color:${c.color}">${c.name[0].toUpperCase()}</div>
+        <div class="contrib-info">
+          <div class="contrib-name">@${c.name}</div>
+          <div class="contrib-stats"><span class="green">${c.commits}</span> commits · ${c.prs} PRs</div>
+        </div>
+      </div>`;
+  });
+}
+
+function buildCommitGraph() {
+  const months = ['Sep','Oct','Nov','Dec','Jan','Feb'];
+  const mEl = document.getElementById('cgMonths');
+  months.forEach(m => mEl.innerHTML += `<span class="cg-month">${m}</span>`);
+
+  const grid = document.getElementById('cgGrid');
+  // 7 rows x ~36 cols
+  for (let i = 0; i < 7 * 36; i++) {
+    const r = Math.random();
+    let lvl = '';
+    if (r > 0.85) lvl = 'l4';
+    else if (r > 0.7) lvl = 'l3';
+    else if (r > 0.5) lvl = 'l2';
+    else if (r > 0.3) lvl = 'l1';
+    grid.innerHTML += `<div class="cg-cell ${lvl}"></div>`;
+  }
+}
+
+function buildTerminal() {
+  const body = document.getElementById('termBody');
+  let idx = 0;
+  function addLine() {
+    if (idx >= TERM_LINES.length) idx = 0;
+    const line = document.createElement('span');
+    line.className = 'term-line';
+    line.innerHTML = TERM_LINES[idx].text;
+    body.appendChild(line);
+    body.scrollTop = body.scrollHeight;
+    idx++;
+    // Keep max 20 lines
+    while (body.children.length > 20) body.removeChild(body.firstChild);
+  }
+  // Initial burst
+  for (let i = 0; i < 6; i++) setTimeout(() => addLine(), i * 200);
+  // Then periodic
+  setInterval(addLine, 3000);
+}
+
+// ===== ANIMATE STATS =====
+function animateStats() {
+  const targets = { statStars: 42, statForks: 8, statContribs: 1, statPRs: 0, statCommits: 147 };
+  Object.entries(targets).forEach(([id, target]) => {
+    const el = document.getElementById(id);
+    let current = 0;
+    const step = Math.ceil(target / 40);
+    const interval = setInterval(() => {
+      current = Math.min(current + step, target);
+      el.textContent = current.toLocaleString();
+      if (current >= target) clearInterval(interval);
+    }, 30);
+  });
+}
+
+// ===== LIVE ACTIVITY SIMULATION =====
+const LIVE_ACTIONS = [
+  () => ({ user: 'anon', text: `starred the repository`, time: 'just now' }),
+  () => ({ user: 'anon', text: `forked <span class="highlight">graphista</span>`, time: 'just now' }),
+];
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function addLiveActivity() {
+  const gen = LIVE_ACTIONS[Math.floor(Math.random() * LIVE_ACTIONS.length)]();
+  const el = document.getElementById('actFeed');
+  const item = document.createElement('div');
+  item.className = 'act-item';
+  item.innerHTML = `
+    <div class="act-avatar">${gen.user[0].toUpperCase()}</div>
+    <div class="act-content">
+      <div class="act-user">@${gen.user}</div>
+      <div class="act-text">${gen.text}</div>
+      <div class="act-time">${gen.time}</div>
+    </div>`;
+  el.insertBefore(item, el.firstChild);
+  while (el.children.length > 15) el.removeChild(el.lastChild);
+
+  // Bump stats occasionally
+  if (Math.random() > 0.7) {
+    const starsEl = document.getElementById('statStars');
+    starsEl.textContent = (parseInt(starsEl.textContent.replace(',','')) + 1).toLocaleString();
+  }
+}
+
+// ===== BOOT =====
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    buildActivity();
+    buildCommitGraph();
+    buildTerminal();
+    
+    document.getElementById('loader').classList.add('done');
+    document.getElementById('app').classList.add('ready');
+    
+    setTimeout(animateStats, 300);
+    setInterval(addLiveActivity, 8000);
+  }, 1500);
+});
+</script>
+</body>
+</html>
