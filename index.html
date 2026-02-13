@@ -18,7 +18,27 @@
   ::selection{background:#00ff8833;color:#fff}
   body{font-family:var(--mono);background:var(--bg);color:var(--tx);overflow:hidden;-webkit-font-smoothing:antialiased}
 
-  .app{display:grid;grid-template-columns:52px 240px 1fr;grid-template-rows:38px 1fr 26px;height:100vh;animation:boot .5s ease}
+  .app{display:grid;grid-template-columns:52px 240px 1fr;grid-template-rows:38px 1fr 26px;height:100vh;opacity:0;pointer-events:none;transition:opacity .5s ease}
+  .app.ready{opacity:1;pointer-events:all}
+
+  /* LOADING SCREEN */
+  .loader{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s ease,visibility .6s}
+  .loader.done{opacity:0;visibility:hidden;pointer-events:none}
+  .loader-grid{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 59px,#0d0d0d 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,#0d0d0d 60px);opacity:.4}
+  .loader-inner{position:relative;z-index:1;width:500px;max-width:90vw}
+  .loader-logo{font:800 28px var(--mono);color:var(--green);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;opacity:0;transform:translateY(8px);animation:lFadeUp .5s .2s ease forwards}
+  .loader-sub{font:400 11px var(--mono);color:var(--tx3);letter-spacing:.04em;margin-bottom:28px;opacity:0;animation:lFadeUp .4s .5s ease forwards}
+  @keyframes lFadeUp{to{opacity:1;transform:translateY(0)}}
+  .loader-lines{min-height:180px}
+  .loader-line{font:400 10px var(--mono);line-height:1.9;color:var(--tx3);opacity:0;transform:translateX(-6px);white-space:nowrap;overflow:hidden}
+  .loader-line.show{opacity:1;transform:translateX(0);transition:all .2s ease}
+  .loader-line .lk{color:var(--green)}.loader-line .lb{color:var(--blue)}.loader-line .ly{color:var(--yellow)}.loader-line .lp{color:var(--purple)}.loader-line .lc{color:var(--tx4)}.loader-line .lw{color:var(--white)}
+  .loader-bar{width:100%;height:2px;background:var(--border);margin-top:24px;overflow:hidden;opacity:0;animation:lFadeUp .3s .6s ease forwards}
+  .loader-bar .fill{height:100%;width:0%;background:var(--green);transition:width .15s linear}
+  .loader-status{font:500 8px var(--mono);color:var(--tx4);text-transform:uppercase;letter-spacing:.08em;margin-top:8px;opacity:0;animation:lFadeUp .3s .7s ease forwards}
+  .loader-enter{margin-top:20px;padding:8px 24px;border:1px solid var(--green);background:0;font:600 10px var(--mono);color:var(--green);text-transform:uppercase;letter-spacing:.08em;cursor:pointer;opacity:0;visibility:hidden;transition:all .15s}
+  .loader-enter.show{opacity:1;visibility:visible}
+  .loader-enter:hover{background:var(--green);color:var(--bg)}
 
   /* CA INLINE */
   .ca-tag{display:flex;align-items:center;gap:5px;margin-left:8px;padding-left:8px;border-left:1px solid var(--border2)}
@@ -249,7 +269,20 @@
 </style>
 </head>
 <body>
-<div class="app">
+<!-- LOADING SCREEN -->
+<div class="loader" id="loader">
+  <div class="loader-grid"></div>
+  <div class="loader-inner">
+    <div class="loader-logo">GRAPHISTA <span style="font-size:12px;color:var(--tx3);font-weight:400;letter-spacing:.06em">by Pippin</span></div>
+    <div class="loader-sub">Dynamic Graph-Based LLM-Powered Memory System</div>
+    <div class="loader-lines" id="loaderLines"></div>
+    <div class="loader-bar"><div class="fill" id="loaderBar"></div></div>
+    <div class="loader-status" id="loaderStatus">initializing...</div>
+    <button class="loader-enter" id="loaderEnter" onclick="enterApp()">Enter Dashboard →</button>
+  </div>
+</div>
+
+<div class="app" id="appMain">
   <nav class="rail">
 
     <button class="rb on" data-v="arch"><span class="tp">System</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg></button>
@@ -1482,6 +1515,52 @@ function copyCA(){
     btn.textContent='Copied!';btn.classList.add('done');
     setTimeout(()=>{btn.textContent='Copy CA';btn.classList.remove('done')},1500);
   });
+}
+
+// ===== LOADING SCREEN =====
+const BOOT_LINES = [
+  {t:200,  h:'<span class="lc">$</span> <span class="lw">graphista</span> <span class="lk">init</span> --backend=local'},
+  {t:500,  h:'<span class="lc">[boot]</span> Loading ontology config...'},
+  {t:800,  h:'<span class="lc">[boot]</span> <span class="lb">Graph-Based Memory</span> — stores knowledge as interconnected nodes & edges'},
+  {t:1100, h:'<span class="lc">[boot]</span> <span class="lb">LLM-Powered Loops</span> — two AI loops for reading and writing the graph'},
+  {t:1500, h:'<span class="lc">[core]</span> <span class="lk">SmartRetrievalTool</span> — chain-of-thought reasoning over graph data'},
+  {t:1800, h:'<span class="lc">[core]</span> &nbsp;&nbsp;↳ read-only access: vector_search, get_edges, find_similar_nodes'},
+  {t:2100, h:'<span class="lc">[core]</span> <span class="ly">SmartNodeProcessor</span> — auto-extracts entities, deduplicates, links'},
+  {t:2400, h:'<span class="lc">[core]</span> &nbsp;&nbsp;↳ read+write: create_node, update_node, create_edge, batch ops'},
+  {t:2800, h:'<span class="lc">[api]</span> &nbsp;<span class="lp">memory.ask(question)</span> → natural language query with CoT reasoning'},
+  {t:3100, h:'<span class="lc">[api]</span> &nbsp;<span class="lp">memory.ingest(text)</span> → extract → dedup → embed → link → store'},
+  {t:3500, h:'<span class="lc">[db]</span> &nbsp;&nbsp;GraphRouter initialized — supports Local JSON / Neo4j / FalkorDB'},
+  {t:3800, h:'<span class="lc">[vec]</span> &nbsp;Embedding engine: ada-002 (1536-dim) — vector similarity search ready'},
+  {t:4100, h:'<span class="lc">[load]</span> Loading <span class="lk">20</span> nodes, <span class="lk">38</span> edges, <span class="lk">8</span> documents...'},
+  {t:4400, h:'<span class="lc">[net]</span> &nbsp;Crypto knowledge graph: persons, companies, concepts, relationships'},
+  {t:4800, h:'<span class="lk">[✓]</span> &nbsp;<span class="lw">System online</span> — graphista v0.1.0 | MIT License | by Pippin'},
+];
+
+const loaderLines = document.getElementById('loaderLines');
+const loaderBar = document.getElementById('loaderBar');
+const loaderStatus = document.getElementById('loaderStatus');
+const totalTime = BOOT_LINES[BOOT_LINES.length-1].t + 600;
+
+BOOT_LINES.forEach((l, i) => {
+  setTimeout(() => {
+    const div = document.createElement('div');
+    div.className = 'loader-line';
+    div.innerHTML = l.h;
+    loaderLines.appendChild(div);
+    requestAnimationFrame(() => div.classList.add('show'));
+    loaderLines.scrollTop = loaderLines.scrollHeight;
+    loaderBar.style.width = Math.round(((i + 1) / BOOT_LINES.length) * 100) + '%';
+    if (i === BOOT_LINES.length - 1) {
+      loaderStatus.textContent = 'ready';
+      loaderStatus.style.color = '#00ff88';
+      document.getElementById('loaderEnter').classList.add('show');
+    }
+  }, l.t);
+});
+
+function enterApp() {
+  document.getElementById('loader').classList.add('done');
+  document.getElementById('appMain').classList.add('ready');
 }
 
 // ===== INIT =====
