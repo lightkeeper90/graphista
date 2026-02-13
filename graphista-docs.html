@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRAPHISTA — Documentation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap');
+:root{
+  --bg:#060608;--bg2:#0c0c10;--bg3:#131318;--bg4:#1a1a22;--bg5:#222230;
+  --border:#1a1a24;--border2:#25253a;--border3:#333350;
+  --tx:#c8c8d4;--tx2:#8888a0;--tx3:#555570;--tx4:#3a3a50;
+  --white:#e8e8f0;--green:#00ff88;--green2:#00cc6a;--gdim:#00ff8815;
+  --blue:#4488ff;--yellow:#ffcc00;--purple:#aa66ff;--cyan:#00dddd;--red:#ff4466;--orange:#ff8844;
+  --mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+::selection{background:#00ff8833;color:#fff}
+body{font-family:var(--mono);background:var(--bg);color:var(--tx);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:var(--green);text-decoration:none;transition:opacity .15s}a:hover{opacity:.7}
+
+/* GRID BACKGROUND */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 59px,#0a0a1408 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,#0a0a1408 60px);pointer-events:none;z-index:0}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:44px;backdrop-filter:blur(12px)}
+.topbar-l{display:flex;align-items:center;gap:12px}
+.topbar-logo{font:800 13px var(--mono);color:var(--green);letter-spacing:.12em;text-transform:uppercase}
+.topbar-sep{color:var(--tx4)}
+.topbar-sub{font:400 10px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.06em}
+.topbar-r{display:flex;align-items:center;gap:8px}
+.topbar-link{padding:5px 12px;border:1px solid var(--border2);font:500 9px var(--mono);color:var(--tx2);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:5px;transition:all .15s}
+.topbar-link:hover{border-color:var(--green);color:var(--green);opacity:1}
+.topbar-link svg{flex-shrink:0}
+.topbar-link.pri{border-color:var(--green);color:var(--green)}
+.topbar-link.pri:hover{background:var(--green);color:var(--bg)}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 44px);position:relative;z-index:1}
+
+/* SIDEBAR NAV */
+.sidebar{border-right:1px solid var(--border);padding:20px 0;position:sticky;top:44px;height:calc(100vh - 44px);overflow-y:auto}
+.sidebar::-webkit-scrollbar{width:2px}.sidebar::-webkit-scrollbar-thumb{background:var(--border2)}
+.snav-group{padding:0 16px;margin-bottom:16px}
+.snav-label{font:700 8px var(--mono);color:var(--tx4);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.snav-label::before{content:'';width:6px;height:1px;background:var(--tx4)}
+.snav-item{display:block;padding:5px 12px;font:400 10px var(--mono);color:var(--tx3);cursor:pointer;transition:all .12s;border-left:2px solid transparent}
+.snav-item:hover{color:var(--tx);background:var(--bg3)}
+.snav-item.active{color:var(--green);border-left-color:var(--green);background:var(--gdim)}
+
+/* MAIN */
+.main{padding:32px 48px 80px;max-width:900px}
+
+/* HERO */
+.hero{margin-bottom:48px;animation:fadeUp .6s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.hero-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border:1px solid var(--border2);font:500 8px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px}
+.hero-badge .dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font:800 32px var(--mono);color:var(--white);letter-spacing:-.02em;line-height:1.2;margin-bottom:12px}
+.hero h1 span{color:var(--green)}
+.hero-desc{font:400 13px var(--sans);color:var(--tx2);line-height:1.7;max-width:600px;margin-bottom:20px}
+.hero-links{display:flex;gap:8px;flex-wrap:wrap}
+.hero-btn{padding:8px 18px;font:600 10px var(--mono);text-transform:uppercase;letter-spacing:.04em;display:flex;align-items:center;gap:6px;transition:all .15s;cursor:pointer;border:1px solid}
+.hero-btn.pri{border-color:var(--green);color:var(--green);background:0}.hero-btn.pri:hover{background:var(--green);color:var(--bg)}
+.hero-btn.sec{border-color:var(--border2);color:var(--tx2);background:0}.hero-btn.sec:hover{border-color:var(--border3);color:var(--tx)}
+
+/* SECTIONS */
+.section{margin-bottom:48px;animation:fadeUp .6s ease both}
+.section:nth-child(2){animation-delay:.05s}.section:nth-child(3){animation-delay:.1s}
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:default}
+.section-num{font:700 9px var(--mono);color:var(--tx4);letter-spacing:.06em;text-transform:uppercase}
+.section-title{font:700 16px var(--mono);color:var(--white);letter-spacing:-.01em}
+.section-line{flex:1;height:1px;background:var(--border)}
+
+.section p{font:400 12px var(--sans);color:var(--tx2);line-height:1.8;margin-bottom:12px}
+.section p code{font:500 10px var(--mono);color:var(--green);background:var(--bg3);border:1px solid var(--border);padding:1px 5px}
+.section strong{color:var(--white);font-weight:600}
+.section ul{list-style:none;margin:8px 0 16px}
+.section li{font:400 11px var(--sans);color:var(--tx2);line-height:1.7;padding:3px 0 3px 16px;position:relative}
+.section li::before{content:'→';position:absolute;left:0;color:var(--green);font:500 10px var(--mono)}
+
+/* CODE BLOCKS */
+.codeblock{background:var(--bg2);border:1px solid var(--border);margin:12px 0 20px;overflow:hidden;position:relative}
+.codeblock-head{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.codeblock-lang{font:600 8px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.06em}
+.codeblock-copy{padding:2px 8px;border:1px solid var(--border2);background:0;font:500 8px var(--mono);color:var(--tx3);cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:.04em}
+.codeblock-copy:hover{border-color:var(--green);color:var(--green)}
+.codeblock-copy.done{border-color:var(--green);color:var(--green)}
+.codeblock-body{padding:12px 16px;overflow-x:auto;font:400 10px var(--mono);line-height:1.8;color:var(--tx)}
+.codeblock-body::-webkit-scrollbar{height:2px}.codeblock-body::-webkit-scrollbar-thumb{background:var(--border2)}
+.ck{color:var(--purple)}.cf{color:var(--blue)}.cs{color:var(--green)}.cn{color:var(--yellow)}.cc{color:var(--tx4)}.cv{color:var(--tx)}.co{color:var(--orange)}
+
+/* INTERACTIVE ARCHITECTURE */
+.arch-canvas{width:100%;height:420px;background:var(--bg2);border:1px solid var(--border);margin:12px 0 20px;position:relative;overflow:hidden;cursor:default}
+.arch-canvas canvas{width:100%;height:100%}
+.arch-info{position:absolute;bottom:0;left:0;right:0;background:var(--bg3);border-top:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .35s ease,opacity .25s;opacity:0}
+.arch-info.open{max-height:200px;opacity:1}
+.arch-info-head{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border)}
+.arch-info-name{font:700 11px var(--mono);color:var(--white);text-transform:uppercase;letter-spacing:.04em}
+.arch-info-close{width:20px;height:20px;border:1px solid var(--border2);background:0;color:var(--tx3);cursor:pointer;font:10px var(--mono);display:flex;align-items:center;justify-content:center}.arch-info-close:hover{color:var(--red);border-color:var(--red)}
+.arch-info-body{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:10px 14px;font:400 9px var(--mono);color:var(--tx3);line-height:1.7;overflow-y:auto;max-height:140px}
+.arch-info-body::-webkit-scrollbar{width:2px}.arch-info-body::-webkit-scrollbar-thumb{background:var(--border2)}
+.arch-info-body .code-col{background:var(--bg);border:1px solid var(--border);padding:8px 10px;overflow:auto;font:400 9px var(--mono);line-height:1.7}
+.arch-info-body .code-col .cline{display:block;white-space:nowrap}
+.arch-info-body .desc-col{}
+.arch-info-body .desc-col .stat{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)}.arch-info-body .stat .val{color:var(--green);font-weight:600}
+
+/* COLLAPSIBLE CARDS */
+.card{border:1px solid var(--border);margin:8px 0;overflow:hidden;transition:border-color .15s}
+.card:hover{border-color:var(--border2)}
+.card-head{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background .12s}
+.card-head:hover{background:var(--bg3)}
+.card-chevron{font:500 10px var(--mono);color:var(--tx4);transition:transform .2s,color .15s;flex-shrink:0}
+.card.open .card-chevron{transform:rotate(90deg);color:var(--green)}
+.card-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.card-name{font:600 11px var(--mono);color:var(--white);flex:1}
+.card-tag{font:500 7px var(--mono);color:var(--tx4);border:1px solid var(--border);padding:1px 5px;text-transform:uppercase;letter-spacing:.04em}
+.card-body{max-height:0;overflow:hidden;transition:max-height .4s ease,opacity .3s;opacity:0;background:var(--bg2)}
+.card.open .card-body{max-height:600px;opacity:1}
+.card-body-inner{padding:12px 14px}
+.card-body-inner p{font:400 10px var(--sans);color:var(--tx2);line-height:1.7;margin-bottom:8px}
+.card-code{background:var(--bg);border:1px solid var(--border);padding:8px 12px;margin-top:8px;font:400 9px var(--mono);line-height:1.7;color:var(--tx3);overflow-x:auto;position:relative}
+.card-code .cline{display:block;white-space:nowrap}
+.card-cursor{display:inline-block;width:5px;height:10px;background:var(--green);animation:blink 1s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.card-progress{height:2px;background:var(--border);margin-bottom:8px}.card-progress .bar{height:100%;background:var(--green);width:0%;transition:width .12s linear}
+
+/* API TABLE */
+.api-table{width:100%;border-collapse:collapse;margin:12px 0 20px}
+.api-table th{font:600 8px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:6px 10px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.api-table td{font:400 10px var(--mono);padding:6px 10px;border-bottom:1px solid var(--border);color:var(--tx2)}
+.api-table td:first-child{color:var(--blue);font-weight:500}
+.api-table tr:hover td{background:var(--bg3)}
+.api-table .ret{color:var(--green)}
+
+/* FOOTER */
+.footer{border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;font:400 9px var(--mono);color:var(--tx4)}
+.footer a{color:var(--tx3)}
+
+@media(max-width:768px){.layout{grid-template-columns:1fr}.sidebar{display:none}.main{padding:20px 16px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-l">
+    <span class="topbar-logo">Graphista</span>
+    <span class="topbar-sep">//</span>
+    <span class="topbar-sub">Documentation</span>
+  </div>
+  <div class="topbar-r">
+    <a href="https://discord.gg/xNXnJ5JFsA" target="_blank" class="topbar-link"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03z"/></svg>Discord</a>
+    <a href="https://github.com/pippinlovesyou/graphista" target="_blank" class="topbar-link pri"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>GitHub</a>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="snav-group">
+    <div class="snav-label">Getting Started</div>
+    <a class="snav-item active" onclick="scrollToSec('overview')">Overview</a>
+    <a class="snav-item" onclick="scrollToSec('install')">Installation</a>
+    <a class="snav-item" onclick="scrollToSec('quickstart')">Quickstart</a>
+  </div>
+  <div class="snav-group">
+    <div class="snav-label">Architecture</div>
+    <a class="snav-item" onclick="scrollToSec('arch')">System Diagram</a>
+    <a class="snav-item" onclick="scrollToSec('components')">Core Components</a>
+  </div>
+  <div class="snav-group">
+    <div class="snav-label">API Reference</div>
+    <a class="snav-item" onclick="scrollToSec('memory')">Memory Class</a>
+    <a class="snav-item" onclick="scrollToSec('ingest')">ingest()</a>
+    <a class="snav-item" onclick="scrollToSec('ask')">ask()</a>
+    <a class="snav-item" onclick="scrollToSec('tools')">Tool Library</a>
+  </div>
+  <div class="snav-group">
+    <div class="snav-label">Advanced</div>
+    <a class="snav-item" onclick="scrollToSec('advanced')">Advanced Usage</a>
+    <a class="snav-item" onclick="scrollToSec('backends')">Backends</a>
+  </div>
+</nav>
+
+<div class="main">
+  <!-- HERO -->
+  <div class="hero" id="overview">
+    <div class="hero-badge"><div class="dot"></div> MIT License — Open Source</div>
+    <h1><span>Graphista:</span> Dynamic Graph-Based LLM-Powered Memory</h1>
+    <p class="hero-desc">A proof-of-concept prototype that leverages LLM loops for graph-based memory management. Two specialized loops — <strong>SmartNodeProcessor</strong> for ingestion and <strong>SmartRetrievalTool</strong> for querying — enable dynamic knowledge management with chain-of-thought reasoning.</p>
+    <div class="hero-links">
+      <a href="https://github.com/pippinlovesyou/graphista" target="_blank" class="hero-btn pri"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>View on GitHub</a>
+      <a href="https://discord.gg/xNXnJ5JFsA" target="_blank" class="hero-btn sec">Join Discord</a>
+    </div>
+  </div>
+
+  <!-- INSTALL -->
+  <div class="section" id="install">
+    <div class="section-head"><span class="section-num">01</span><span class="section-title">Installation</span><div class="section-line"></div></div>
+    <p>Clone the repository and install dependencies:</p>
+    <div class="codeblock"><div class="codeblock-head"><span class="codeblock-lang">bash</span><button class="codeblock-copy" onclick="copyCode(this)">Copy</button></div><div class="codeblock-body">git clone https://github.com/pippinlovesyou/graphista.git
+cd graphista
+pip install -e .</div></div>
+    <p><strong>Project structure:</strong></p>
+    <div class="codeblock"><div class="codeblock-head"><span class="codeblock-lang">tree</span><button class="codeblock-copy" onclick="copyCode(this)">Copy</button></div><div class="codeblock-body"><span class="cc">graphista/</span>
+├── <span class="cf">memory.py</span>           <span class="cc"># Unified Memory class (entry point)</span>
+├── <span class="cf">console.py</span>          <span class="cc"># Interactive CLI console</span>
+├── <span class="cf">example.py</span>          <span class="cc"># Usage examples</span>
+├── <span class="co">graphrouter/</span>        <span class="cc"># Graph database abstraction layer</span>
+├── <span class="co">ingestion_engine/</span>   <span class="cc"># SmartNodeProcessor + extraction</span>
+├── <span class="co">llm_engine/</span>         <span class="cc"># LLM integration + tool definitions</span>
+├── <span class="co">docs/</span>               <span class="cc"># Documentation</span>
+└── <span class="co">tests/</span>              <span class="cc"># Test suite</span></div></div>
+  </div>
+
+  <!-- QUICKSTART -->
+  <div class="section" id="quickstart">
+    <div class="section-head"><span class="section-num">02</span><span class="section-title">Quickstart</span><div class="section-line"></div></div>
+    <p>Initialize Memory, ingest text, and query — in three steps:</p>
+
+    <div class="card" id="card-init">
+      <div class="card-head" onclick="toggleCard('card-init')"><span class="card-chevron">▶</span><div class="card-dot" style="background:var(--purple)"></div><span class="card-name">Step 1 — Initialize Memory</span><span class="card-tag">memory.py</span></div>
+      <div class="card-body"><div class="card-body-inner"><div class="card-progress"><div class="bar"></div></div><p>Import the <code>Memory</code> class and configure your ontology, extraction rules, and LLM settings. The backend defaults to local JSON for testing.</p><div class="card-code"></div></div></div>
+    </div>
+    <div class="card" id="card-ingest">
+      <div class="card-head" onclick="toggleCard('card-ingest')"><span class="card-chevron">▶</span><div class="card-dot" style="background:var(--yellow)"></div><span class="card-name">Step 2 — Ingest Data</span><span class="card-tag">ingest()</span></div>
+      <div class="card-body"><div class="card-body-inner"><div class="card-progress"><div class="bar"></div></div><p>The <code>ingest()</code> method processes raw text through the <strong>SmartNodeProcessor</strong> loop: extracting entities, deduplicating, generating embeddings, and creating edges automatically.</p><div class="card-code"></div></div></div>
+    </div>
+    <div class="card" id="card-ask">
+      <div class="card-head" onclick="toggleCard('card-ask')"><span class="card-chevron">▶</span><div class="card-dot" style="background:var(--blue)"></div><span class="card-name">Step 3 — Query the Graph</span><span class="card-tag">ask()</span></div>
+      <div class="card-body"><div class="card-body-inner"><div class="card-progress"><div class="bar"></div></div><p>The <code>ask()</code> method uses the <strong>SmartRetrievalTool</strong> to traverse the graph with chain-of-thought reasoning, returning both the answer and its reasoning steps.</p><div class="card-code"></div></div></div>
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div class="section" id="arch">
+    <div class="section-head"><span class="section-num">03</span><span class="section-title">System Architecture</span><div class="section-line"></div></div>
+    <p>Click any component below to explore its implementation. Particles show the live data flow: <span style="color:var(--blue)">blue</span> = read path, <span style="color:var(--yellow)">yellow</span> = write path, <span style="color:var(--green)">green</span> = LLM loops.</p>
+    <div class="arch-canvas" id="archWrap">
+      <canvas id="archC"></canvas>
+      <div class="arch-info" id="archInfo">
+        <div class="arch-info-head"><span class="arch-info-name" id="aiName">—</span><button class="arch-info-close" onclick="closeArchInfo()">×</button></div>
+        <div class="arch-info-body"><div class="code-col" id="aiCode"></div><div class="desc-col" id="aiDesc"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPONENTS -->
+  <div class="section" id="components">
+    <div class="section-head"><span class="section-num">04</span><span class="section-title">Core Components</span><div class="section-line"></div></div>
+
+    <div class="card" id="card-snp"><div class="card-head" onclick="toggleCard('card-snp')"><span class="card-chevron">▶</span><div class="card-dot" style="background:var(--green)"></div><span class="card-name">SmartNodeProcessor</span><span class="card-tag">ingestion_engine</span></div><div class="card-body"><div class="card-body-inner"><div class="card-progress"><div class="bar"></div></div><p>Full read/write access to the graph database. Runs an LLM loop that processes incoming text: extracting entities, checking for duplicates via vector similarity, merging or creating nodes, and establishing edges. Exits when the LLM returns a <code>finish</code> action.</p><div class="card-code"></div></div></div></div>
+
+    <div class="card" id="card-srt"><div class="card-head" onclick="toggleCard('card-srt')"><span class="card-chevron">▶</span><div class="card-dot" style="background:var(--green)"></div><span class="card-name">SmartRetrievalTool</span><span class="card-tag">llm_engine</span></div><div class="card-body"><div class="card-body-inner"><div class="card-progress"><div class="bar"></div></div><p>Read-only graph access. Runs a chain-of-thought loop: the LLM iteratively decides which read tools to call (vector search, get edges, find similar nodes), building context until it has enough to synthesize a final answer.</p><div class="card-code"></div></div></div></div>
+
+    <div class="card" id="card-gr"><div class="card-head" onclick="toggleCard('card-gr')"><span class="card-chevron">▶</span><div class="card-dot" style="background:var(--cyan)"></div><span class="card-name">GraphRouter</span><span class="card-tag">graphrouter/</span></div><div class="card-body"><div class="card-body-inner"><div class="card-progress"><div class="bar"></div></div><p>Database abstraction layer that provides a unified API across multiple backends. Handles node/edge CRUD, vector storage, batch operations, and path queries. Supports <strong>Local JSON</strong>, <strong>Neo4j</strong>, and <strong>FalkorDB</strong>.</p><div class="card-code"></div></div></div></div>
+  </div>
+
+  <!-- MEMORY CLASS -->
+  <div class="section" id="memory">
+    <div class="section-head"><span class="section-num">05</span><span class="section-title">Memory Class API</span><div class="section-line"></div></div>
+    <p>The <code>Memory</code> class is the unified entry point. It ties together the graph database, ontology, LLM, and processing loops.</p>
+    <table class="api-table">
+      <thead><tr><th>Method</th><th>Description</th><th>Returns</th></tr></thead>
+      <tbody>
+        <tr><td>Memory(backend, ontology_config, ...)</td><td>Initialize with ontology, extraction rules, LLM config</td><td class="ret">Memory instance</td></tr>
+        <tr><td>ingest(text)</td><td>Process text → extract entities → create graph nodes/edges</td><td class="ret">{id, processing_result}</td></tr>
+        <tr><td>ask(question)</td><td>Natural language query via chain-of-thought retrieval</td><td class="ret">{final_answer, chain_of_thought}</td></tr>
+        <tr><td>retrieve(keyword)</td><td>Simple keyword search across node properties</td><td class="ret">list[Node]</td></tr>
+        <tr><td>query(Query)</td><td>Advanced query object with filters, vector search, paths</td><td class="ret">list[Node]</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- INGEST DETAIL -->
+  <div class="section" id="ingest">
+    <div class="section-head"><span class="section-num">06</span><span class="section-title">ingest() — Ingestion Pipeline</span><div class="section-line"></div></div>
+    <p>When you call <code>memory.ingest(text)</code>, the following pipeline executes:</p>
+    <ul>
+      <li><strong>Document node created</strong> with raw text stored as content</li>
+      <li><strong>SmartNodeProcessor loop starts</strong> — LLM reads text and decides actions</li>
+      <li><strong>Entity extraction</strong> — identifies Person, Company, Concept entities</li>
+      <li><strong>Deduplication</strong> — vector similarity search against existing nodes (threshold 0.92)</li>
+      <li><strong>Node creation or merge</strong> — new entities become nodes, duplicates get merged</li>
+      <li><strong>Edge creation</strong> — relationships between entities become directed edges</li>
+      <li><strong>Embedding generation</strong> — all new nodes get vector embeddings via OpenAI</li>
+      <li><strong>Loop exits</strong> — when LLM returns <code>finish</code> action with processing summary</li>
+    </ul>
+    <div class="codeblock"><div class="codeblock-head"><span class="codeblock-lang">python</span><button class="codeblock-copy" onclick="copyCode(this)">Copy</button></div><div class="codeblock-body"><span class="cv">result</span> = memory.<span class="cf">ingest</span>(<span class="cs">"John Doe is a software engineer at Innotech."</span>)
+<span class="ck">print</span>(result[<span class="cs">"id"</span>])                <span class="cc"># "doc_001"</span>
+<span class="ck">print</span>(result[<span class="cs">"processing_result"</span>])  <span class="cc"># {chain_of_thought: [...], new_nodes: 2, ...}</span></div></div>
+  </div>
+
+  <!-- ASK DETAIL -->
+  <div class="section" id="ask">
+    <div class="section-head"><span class="section-num">07</span><span class="section-title">ask() — Query Pipeline</span><div class="section-line"></div></div>
+    <p>When you call <code>memory.ask(question)</code>, the SmartRetrievalTool loop executes:</p>
+    <ul>
+      <li><strong>Question parsed</strong> — LLM analyzes the query intent</li>
+      <li><strong>Tool selection</strong> — LLM picks from: <code>find_similar_nodes</code>, <code>get_edges</code>, <code>get_connected_nodes</code>, <code>vector_search</code>, <code>query</code></li>
+      <li><strong>Iterative traversal</strong> — each tool result is added to context, LLM decides next step</li>
+      <li><strong>Chain-of-thought recorded</strong> — every action logged for transparency</li>
+      <li><strong>Synthesis</strong> — LLM combines gathered context into a natural language answer</li>
+      <li><strong>Finish</strong> — returns <code>{final_answer, chain_of_thought}</code></li>
+    </ul>
+    <div class="codeblock"><div class="codeblock-head"><span class="codeblock-lang">python</span><button class="codeblock-copy" onclick="copyCode(this)">Copy</button></div><div class="codeblock-body"><span class="cv">answer</span> = memory.<span class="cf">ask</span>(<span class="cs">"Who works at Innotech?"</span>)
+<span class="ck">print</span>(answer[<span class="cs">"final_answer"</span>])     <span class="cc"># "John Doe works at Innotech as a software engineer"</span>
+<span class="ck">print</span>(answer[<span class="cs">"chain_of_thought"</span>])  <span class="cc"># ["vector_search: Innotech", "get_edges: ...", ...]</span></div></div>
+  </div>
+
+  <!-- TOOLS -->
+  <div class="section" id="tools">
+    <div class="section-head"><span class="section-num">08</span><span class="section-title">Tool Library</span><div class="section-line"></div></div>
+    <p><strong>Read-Only Tools</strong> (used by SmartRetrievalTool + SmartNodeProcessor):</p>
+    <table class="api-table">
+      <thead><tr><th>Function</th><th>Description</th><th>Returns</th></tr></thead>
+      <tbody>
+        <tr><td>find_similar_nodes(embedding, k)</td><td>Vector cosine similarity search</td><td class="ret">list[Node]</td></tr>
+        <tr><td>get_node_by_property(key, val)</td><td>Exact property match lookup</td><td class="ret">Node | null</td></tr>
+        <tr><td>get_connected_nodes(node_id)</td><td>All nodes connected by edges</td><td class="ret">list[Node]</td></tr>
+        <tr><td>get_edges(node_id)</td><td>All edges from/to a node</td><td class="ret">list[Edge]</td></tr>
+        <tr><td>vector_search(query, k)</td><td>Text → embed → similarity search</td><td class="ret">list[Node]</td></tr>
+        <tr><td>query(cypher_str)</td><td>Raw Cypher/GQL execution</td><td class="ret">ResultSet</td></tr>
+      </tbody>
+    </table>
+    <p><strong>Write Tools</strong> (SmartNodeProcessor only):</p>
+    <table class="api-table">
+      <thead><tr><th>Function</th><th>Description</th><th>Returns</th></tr></thead>
+      <tbody>
+        <tr><td>create_node(label, props)</td><td>Create node with auto-embedding</td><td class="ret">node_id</td></tr>
+        <tr><td>update_node(id, props)</td><td>Merge properties + refresh embedding</td><td class="ret">void</td></tr>
+        <tr><td>create_edge(src, tgt, rel)</td><td>Create directed relationship</td><td class="ret">edge_id</td></tr>
+        <tr><td>batch_create_nodes(list)</td><td>Bulk insert with parallel embeddings</td><td class="ret">list[id]</td></tr>
+        <tr><td>batch_create_edges(list)</td><td>Bulk edge creation</td><td class="ret">list[id]</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ADVANCED -->
+  <div class="section" id="advanced">
+    <div class="section-head"><span class="section-num">09</span><span class="section-title">Advanced Usage</span><div class="section-line"></div></div>
+    <div class="card" id="card-batch"><div class="card-head" onclick="toggleCard('card-batch')"><span class="card-chevron">▶</span><div class="card-dot" style="background:var(--orange)"></div><span class="card-name">Batch Operations</span><span class="card-tag">performance</span></div><div class="card-body"><div class="card-body-inner"><div class="card-progress"><div class="bar"></div></div><p>Efficiently create thousands of nodes in a single call with parallel embedding generation.</p><div class="card-code"></div></div></div></div>
+    <div class="card" id="card-path"><div class="card-head" onclick="toggleCard('card-path')"><span class="card-chevron">▶</span><div class="card-dot" style="background:var(--orange)"></div><span class="card-name">Path Queries</span><span class="card-tag">traversal</span></div><div class="card-body"><div class="card-body-inner"><div class="card-progress"><div class="bar"></div></div><p>Discover indirect relationships between nodes with configurable depth. Find how Person connects to Company through intermediate nodes.</p><div class="card-code"></div></div></div></div>
+    <div class="card" id="card-hybrid"><div class="card-head" onclick="toggleCard('card-hybrid')"><span class="card-chevron">▶</span><div class="card-dot" style="background:var(--orange)"></div><span class="card-name">Hybrid Search</span><span class="card-tag">vector + property</span></div><div class="card-body"><div class="card-body-inner"><div class="card-progress"><div class="bar"></div></div><p>Combine vector similarity with property filters for precise results. Filter by type/industry then rank by embedding similarity.</p><div class="card-code"></div></div></div></div>
+  </div>
+
+  <!-- BACKENDS -->
+  <div class="section" id="backends">
+    <div class="section-head"><span class="section-num">10</span><span class="section-title">Database Backends</span><div class="section-line"></div></div>
+    <table class="api-table">
+      <thead><tr><th>Backend</th><th>Config</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Local JSON</td><td>backend="local", db_path="graph.json"</td><td class="ret">✓ Stable</td></tr>
+        <tr><td>Neo4j</td><td>backend="neo4j", uri, auth</td><td style="color:var(--yellow)">⚠ Experimental</td></tr>
+        <tr><td>FalkorDB</td><td>backend="falkordb", host, port</td><td style="color:var(--yellow)">⚠ Experimental</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<footer class="footer">
+  <span>Originally built by <a href="https://github.com/pippinlovesyou" target="_blank">Pippin</a> — MIT License</span>
+  <a href="https://github.com/pippinlovesyou/graphista" target="_blank">github.com/pippinlovesyou/graphista</a>
+</footer>
+
+<script>
+// ===== NAV =====
+function scrollToSec(id){
+  document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.snav-item').forEach(s=>s.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ===== COPY =====
+function copyCode(btn){
+  const text=btn.closest('.codeblock').querySelector('.codeblock-body').textContent;
+  navigator.clipboard.writeText(text).then(()=>{btn.textContent='Copied!';btn.classList.add('done');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('done')},1500)});
+}
+
+// ===== COLLAPSIBLE CARDS =====
+const CARD_CODE={
+  'card-init':[
+    '<span class="ck">from</span> <span class="cf">memory</span> <span class="ck">import</span> Memory',
+    '',
+    '<span class="cv">ontology_config</span> = {',
+    '    <span class="cs">"node_types"</span>: {',
+    '        <span class="cs">"Person"</span>: {<span class="cs">"properties"</span>: {<span class="cs">"name"</span>: <span class="cs">"str"</span>, <span class="cs">"role"</span>: <span class="cs">"str"</span>}},',
+    '        <span class="cs">"Company"</span>: {<span class="cs">"properties"</span>: {<span class="cs">"name"</span>: <span class="cs">"str"</span>, <span class="cs">"industry"</span>: <span class="cs">"str"</span>}}',
+    '    },',
+    '    <span class="cs">"edge_types"</span>: {<span class="cs">"WORKS_AT"</span>: {<span class="cs">"properties"</span>: {<span class="cs">"since"</span>: <span class="cs">"str"</span>}}}',
+    '}',
+    '',
+    '<span class="cv">memory</span> = Memory(',
+    '    backend=<span class="cs">"local"</span>,',
+    '    ontology_config=ontology_config,',
+    '    auto_embedding=<span class="cn">True</span>,',
+    '    llm_config={<span class="cs">"model_name"</span>: <span class="cs">"gpt-4o"</span>, <span class="cs">"temperature"</span>: <span class="cn">0.0</span>},',
+    '    db_path=<span class="cs">"graph.json"</span>',
+    ')',
+  ],
+  'card-ingest':[
+    '<span class="cv">doc_text</span> = (',
+    '    <span class="cs">"John Doe is a brilliant software engineer at Innotech. "</span>',
+    '    <span class="cs">"He is known for innovative coding and leadership. "</span>',
+    '    <span class="cs">"Innotech is a rising tech company."</span>',
+    ')',
+    '',
+    '<span class="cv">result</span> = memory.<span class="cf">ingest</span>(doc_text)',
+    '<span class="ck">print</span>(<span class="cs">"Doc ID:"</span>, result[<span class="cs">"id"</span>])',
+    '<span class="ck">print</span>(<span class="cs">"Chain of Thought:"</span>)',
+    '<span class="ck">for</span> step <span class="ck">in</span> result[<span class="cs">"processing_result"</span>][<span class="cs">"chain_of_thought"</span>]:',
+    '    <span class="ck">print</span>(<span class="cs">"  >"</span>, step)',
+    '<span class="cc"># > Extracted entity: John Doe [Person]</span>',
+    '<span class="cc"># > Extracted entity: Innotech [Company]</span>',
+    '<span class="cc"># > Created edge: John Doe → WORKS_AT → Innotech</span>',
+    '<span class="cc"># > Generated embeddings for 2 nodes</span>',
+  ],
+  'card-ask':[
+    '<span class="cv">answer</span> = memory.<span class="cf">ask</span>(<span class="cs">"Who works at Innotech?"</span>)',
+    '',
+    '<span class="ck">print</span>(answer[<span class="cs">"final_answer"</span>])',
+    '<span class="cc"># "John Doe works at Innotech as a software engineer"</span>',
+    '',
+    '<span class="ck">print</span>(<span class="cs">"Reasoning:"</span>)',
+    '<span class="ck">for</span> step <span class="ck">in</span> answer[<span class="cs">"chain_of_thought"</span>]:',
+    '    <span class="ck">print</span>(<span class="cs">"  >"</span>, step)',
+    '<span class="cc"># > vector_search("Innotech") → [Innotech node]</span>',
+    '<span class="cc"># > get_edges(innotech.id) → [WORKS_AT]</span>',
+    '<span class="cc"># > get_node(source_id) → John Doe</span>',
+    '<span class="cc"># > finish: synthesized answer from 3 tool calls</span>',
+  ],
+  'card-snp':[
+    '<span class="ck">class</span> <span class="cf">SmartNodeProcessor</span>:',
+    '    <span class="cs">"""LLM loop with full read/write graph access."""</span>',
+    '',
+    '    <span class="ck">def</span> <span class="cf">process</span>(self, entity):',
+    '        <span class="cc"># 1. Check for duplicate via vector similarity</span>',
+    '        <span class="cv">existing</span> = self.db.<span class="cf">find_similar_nodes</span>(',
+    '            <span class="cf">embed</span>(entity.name), threshold=<span class="cn">0.92</span>)',
+    '',
+    '        <span class="ck">if</span> existing:',
+    '            <span class="cc"># Merge into existing node</span>',
+    '            self.db.<span class="cf">update_node</span>(existing[<span class="cn">0</span>].id, entity.props)',
+    '        <span class="ck">else</span>:',
+    '            <span class="cc"># Create new node with embedding</span>',
+    '            self.db.<span class="cf">create_node</span>(entity.label, entity.props)',
+    '',
+    '        <span class="cc"># 2. Create relationships</span>',
+    '        <span class="ck">for</span> rel <span class="ck">in</span> entity.relationships:',
+    '            self.db.<span class="cf">create_edge</span>(src, rel.target, rel.type)',
+  ],
+  'card-srt':[
+    '<span class="ck">class</span> <span class="cf">SmartRetrievalTool</span>:',
+    '    <span class="cs">"""Read-only chain-of-thought graph traversal."""</span>',
+    '',
+    '    <span class="ck">def</span> <span class="cf">run</span>(self, question):',
+    '        <span class="cv">context</span> = []',
+    '        <span class="ck">while</span> <span class="ck">not</span> self.finished:',
+    '            <span class="cc"># LLM decides which read tool to call</span>',
+    '            <span class="cv">action</span> = self.llm.<span class="cf">decide</span>(question, context)',
+    '',
+    '            <span class="ck">if</span> action.type == <span class="cs">"finish"</span>:',
+    '                <span class="ck">return</span> self.llm.<span class="cf">synthesize</span>(context)',
+    '',
+    '            <span class="cc"># Execute the read tool</span>',
+    '            <span class="cv">result</span> = self.tools[action.name](**action.params)',
+    '            context.append(result)',
+    '',
+    '        <span class="cc"># Available: find_similar, get_edges, vector_search...</span>',
+  ],
+  'card-gr':[
+    '<span class="ck">class</span> <span class="cf">GraphRouter</span>:',
+    '    <span class="cs">"""Unified API across Local/Neo4j/FalkorDB."""</span>',
+    '',
+    '    <span class="ck">def</span> <span class="cf">__init__</span>(self, backend=<span class="cs">"local"</span>):',
+    '        <span class="ck">if</span> backend == <span class="cs">"local"</span>:',
+    '            self.store = LocalJSONStore()',
+    '        <span class="ck">elif</span> backend == <span class="cs">"neo4j"</span>:',
+    '            self.store = Neo4jDriver(uri, auth)',
+    '        <span class="ck">elif</span> backend == <span class="cs">"falkordb"</span>:',
+    '            self.store = FalkorDBClient(host, port)',
+    '',
+    '    <span class="cc"># Unified CRUD for all backends:</span>',
+    '    <span class="cc"># create_node, update_node, get_node, delete_node</span>',
+    '    <span class="cc"># create_edge, get_edges, batch_create_nodes</span>',
+    '    <span class="cc"># vector_search, cosine_search, path_query</span>',
+  ],
+  'card-batch':[
+    '<span class="cc"># Batch create 1000 nodes in one call</span>',
+    '<span class="cv">nodes</span> = [',
+    '    {<span class="cs">"label"</span>: <span class="cs">"Person"</span>, <span class="cs">"properties"</span>: {<span class="cs">"name"</span>: <span class="ck">f</span><span class="cs">"User{i}"</span>, <span class="cs">"age"</span>: <span class="cn">20</span>+i}}',
+    '    <span class="ck">for</span> i <span class="ck">in</span> <span class="cf">range</span>(<span class="cn">1000</span>)',
+    ']',
+    '<span class="cv">ids</span> = memory.db.<span class="cf">batch_create_nodes</span>(nodes)',
+    '<span class="ck">print</span>(<span class="ck">f</span><span class="cs">"Created {len(ids)} nodes"</span>)  <span class="cc"># 1000</span>',
+  ],
+  'card-path':[
+    '<span class="ck">from</span> <span class="cf">graphista</span> <span class="ck">import</span> Query',
+    '',
+    '<span class="cv">q</span> = Query()',
+    'q.<span class="cf">find_path</span>(<span class="cs">"Person"</span>, <span class="cs">"Company"</span>,',
+    '    [<span class="cs">"works_at"</span>, <span class="cs">"founded"</span>],',
+    '    min_depth=<span class="cn">1</span>, max_depth=<span class="cn">3</span>)',
+    '<span class="cv">paths</span> = memory.db.<span class="cf">query</span>(q)',
+    '<span class="cc"># Finds: Person → works_at → Company</span>',
+    '<span class="cc">#        Person → founded → Startup → acquired_by → Company</span>',
+  ],
+  'card-hybrid':[
+    '<span class="cv">q</span> = Query()',
+    'q.<span class="cf">filter</span>(Query.<span class="cf">property_equals</span>(<span class="cs">"industry"</span>, <span class="cs">"tech"</span>))',
+    'q.<span class="cf">vector_nearest</span>(',
+    '    embedding_field=<span class="cs">"embedding"</span>,',
+    '    query_vector=[<span class="cn">0.1</span>, <span class="cn">0.2</span>, <span class="cn">0.3</span>, ...],',
+    '    k=<span class="cn">5</span>, min_score=<span class="cn">0.7</span>)',
+    '<span class="cv">results</span> = memory.<span class="cf">query</span>(q)',
+    '<span class="cc"># Returns tech companies ranked by vector similarity</span>',
+  ],
+};
+
+let cardTimers={};
+function toggleCard(id){
+  const card=document.getElementById(id);
+  const wasOpen=card.classList.contains('open');
+  card.classList.toggle('open');
+  if(!wasOpen && CARD_CODE[id]){
+    const codeEl=card.querySelector('.card-code');
+    const barEl=card.querySelector('.card-progress .bar');
+    codeEl.innerHTML='';barEl.style.width='0%';
+    if(cardTimers[id])clearTimeout(cardTimers[id]);
+    const lines=CARD_CODE[id];let i=0;
+    function addLine(){
+      if(i>=lines.length){const c=document.createElement('span');c.className='card-cursor';codeEl.appendChild(c);barEl.style.width='100%';return;}
+      const line=document.createElement('span');line.className='cline';
+      line.style.opacity='0';line.style.transform='translateX(-6px)';
+      line.innerHTML=lines[i]||'&nbsp;';codeEl.appendChild(line);
+      requestAnimationFrame(()=>{line.style.transition='all .15s ease';line.style.opacity='1';line.style.transform='translateX(0)';});
+      codeEl.scrollTop=codeEl.scrollHeight;
+      barEl.style.width=Math.round(((i+1)/lines.length)*100)+'%';
+      i++;cardTimers[id]=setTimeout(addLine,65+Math.random()*40);
+    }
+    addLine();
+  } else if(wasOpen && cardTimers[id]){clearTimeout(cardTimers[id]);}
+}
+
+// ===== ARCHITECTURE CANVAS =====
+const ac=document.getElementById('archC'),ax=ac.getContext('2d'),aw=document.getElementById('archWrap');
+let AW,AH,afr=0,aparts=[];
+function resizeA(){const r=aw.getBoundingClientRect();AW=r.width;AH=420;ac.width=AW*devicePixelRatio;ac.height=AH*devicePixelRatio;ac.style.width=AW+'px';ac.style.height=AH+'px';ax.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);}
+function getAB(){
+  const cx=AW/2,cy=200;
+  return{
+    user:{x:cx-310,y:cy-12,w:80,h:24,l:'USER',c:'#aa66ff'},
+    ask:{x:cx-160,y:cy-72,w:90,h:22,l:'ask(question)',c:'#4488ff'},
+    ingest:{x:cx-160,y:cy+50,w:90,h:22,l:'ingest(text)',c:'#ffcc00'},
+    retool:{x:cx+10,y:cy-80,w:120,h:28,l:'SmartRetrievalTool',c:'#00ff88'},
+    proctool:{x:cx+10,y:cy+52,w:120,h:28,l:'SmartNodeProcessor',c:'#00ff88'},
+    rtools:{x:cx+200,y:cy-110,w:100,h:100,l:'Read Tools',c:'#4488ff',tools:['find_similar()','get_property()','get_connected()','get_edges()','vector_search()','query()']},
+    wtools:{x:cx+200,y:cy+20,w:100,h:85,l:'Write Tools',c:'#ffcc00',tools:['create_node()','update_node()','create_edge()','batch_create()']},
+    db:{x:cx+350,y:cy-14,w:90,h:28,l:'GraphDatabase',c:'#00ff88'},
+  };
+}
+function drawABox(b,h){ax.save();ax.strokeStyle=h?b.c:b.c+'55';ax.lineWidth=h?1.5:1;if(h){ax.shadowColor=b.c;ax.shadowBlur=8;}ax.strokeRect(b.x,b.y,b.w,b.h);ax.shadowBlur=0;ax.fillStyle=h?b.c+'20':b.c+'08';ax.fillRect(b.x,b.y,b.w,b.h);if(b.tools){ax.font='600 8px "JetBrains Mono"';ax.fillStyle=b.c+'cc';ax.textAlign='center';ax.fillText(b.l,b.x+b.w/2,b.y+12);ax.font='400 6px "JetBrains Mono"';ax.fillStyle=b.c+'66';b.tools.forEach((t,i)=>ax.fillText(t,b.x+b.w/2,b.y+24+i*11));}else{ax.font='600 8px "JetBrains Mono"';ax.fillStyle=b.c+'cc';ax.textAlign='center';ax.fillText(b.l,b.x+b.w/2,b.y+b.h/2+3);}ax.restore();}
+function drawAArr(x1,y1,x2,y2,c,d){ax.save();ax.strokeStyle=c+'33';ax.lineWidth=.6;if(d)ax.setLineDash([2,2]);ax.beginPath();ax.moveTo(x1,y1);ax.lineTo(x2,y2);ax.stroke();const a=Math.atan2(y2-y1,x2-x1);ax.fillStyle=c+'33';ax.beginPath();ax.moveTo(x2,y2);ax.lineTo(x2-4*Math.cos(a-.4),y2-4*Math.sin(a-.4));ax.lineTo(x2-4*Math.cos(a+.4),y2-4*Math.sin(a+.4));ax.fill();ax.restore();}
+function spawnAP(x1,y1,x2,y2,c){aparts.push({x:x1,y:y1,tx:x2,ty:y2,p:0,sp:.007+Math.random()*.006,c,sz:1.5+Math.random()});}
+
+let hovA=null;
+function aboxAt(mx,my){const B=getAB();for(const[k,b]of Object.entries(B)){if(mx>=b.x&&mx<=b.x+b.w&&my>=b.y&&my<=b.y+b.h)return{key:k,...b};}return null;}
+
+const ARCH_DETAIL={
+  user:{code:['from memory import Memory','','memory = Memory(','    backend="local",','    ontology_config=ontology,','    llm_config={"model":"gpt-4o"}',')','','answer = memory.ask("question")','result = memory.ingest("text")'],desc:'<div class="stat"><span>Entry point</span><span class="val">Memory</span></div><div class="stat"><span>Methods</span><span class="val">ask, ingest</span></div><div class="stat"><span>Backends</span><span class="val">3</span></div>'},
+  ask:{code:['def ask(self, question):','    tool = SmartRetrievalTool(','        db=self.db,','        tools=READ_TOOLS','    )','    while not tool.finished:','        action = llm.decide(q, ctx)','        result = tool.execute(action)','    return synthesize(context)'],desc:'<div class="stat"><span>Access</span><span class="val">Read-only</span></div><div class="stat"><span>Returns</span><span class="val">{answer, cot}</span></div><div class="stat"><span>Avg tools</span><span class="val">4.2</span></div>'},
+  ingest:{code:['def ingest(self, text):','    doc = create_document(text)','    processor = SmartNodeProcessor(','        db=self.db,','        tools=READ+WRITE','    )','    for entity in extract(text):','        processor.process(entity)','    return {id: doc.id, result}'],desc:'<div class="stat"><span>Access</span><span class="val">Read+Write</span></div><div class="stat"><span>Returns</span><span class="val">{id, result}</span></div><div class="stat"><span>Avg entities</span><span class="val">4.3</span></div>'},
+  retool:{code:['class SmartRetrievalTool:','    # Read-only CoT loop','    def execute(self, action):','        if action == "finish":','            return answer','        result = tools[action](params)','        context.append(result)','        return result'],desc:'<div class="stat"><span>Type</span><span class="val">LLM Loop</span></div><div class="stat"><span>Access</span><span class="val">Read-only</span></div><div class="stat"><span>Tools</span><span class="val">6</span></div>'},
+  proctool:{code:['class SmartNodeProcessor:','    # Read+Write node loop','    def process(self, entity):','        existing = find_similar(name)','        if existing:','            update_node(existing, props)','        else:','            create_node(label, props)','        create_edges(relations)'],desc:'<div class="stat"><span>Type</span><span class="val">LLM Loop</span></div><div class="stat"><span>Access</span><span class="val">Read+Write</span></div><div class="stat"><span>Dedup</span><span class="val">96.2%</span></div>'},
+  rtools:{code:['find_similar_nodes(embed, k)','get_node_by_property(key, val)','get_connected_nodes(node_id)','get_edges(node_id)','vector_search(query, k)','query(cypher_str)'],desc:'<div class="stat"><span>Count</span><span class="val">6 tools</span></div><div class="stat"><span>Access</span><span class="val">Read-only</span></div><div class="stat"><span>Used by</span><span class="val">Both loops</span></div>'},
+  wtools:{code:['create_node(label, props)','update_node(node_id, props)','create_edge(src, tgt, rel)','batch_create_nodes(list)','batch_create_edges(list)'],desc:'<div class="stat"><span>Count</span><span class="val">5 tools</span></div><div class="stat"><span>Access</span><span class="val">Write</span></div><div class="stat"><span>Used by</span><span class="val">NodeProcessor</span></div>'},
+  db:{code:['class GraphDatabase:','    backends = [','        "local",  # JSON file','        "neo4j",  # Production','        "falkordb" # In-memory','    ]','    # Unified CRUD + vector index'],desc:'<div class="stat"><span>Backends</span><span class="val">3</span></div><div class="stat"><span>Vectors</span><span class="val">1536-dim</span></div><div class="stat"><span>Default</span><span class="val">local</span></div>'},
+};
+
+function openArchInfo(key){
+  const d=ARCH_DETAIL[key];if(!d)return;
+  document.getElementById('aiName').textContent=key.toUpperCase();
+  document.getElementById('aiCode').innerHTML=d.code.map(l=>`<span class="cline">${l}</span>`).join('');
+  document.getElementById('aiDesc').innerHTML=d.desc;
+  document.getElementById('archInfo').classList.add('open');
+}
+function closeArchInfo(){document.getElementById('archInfo').classList.remove('open');}
+
+ac.onmousemove=e=>{const r=ac.getBoundingClientRect();hovA=aboxAt(e.clientX-r.left,e.clientY-r.top);ac.style.cursor=hovA?'pointer':'default';};
+ac.onclick=e=>{const r=ac.getBoundingClientRect();const b=aboxAt(e.clientX-r.left,e.clientY-r.top);if(b){openArchInfo(b.key);for(let i=0;i<6;i++)spawnAP(b.x+b.w/2,b.y+b.h/2,b.x+Math.random()*b.w,AH-10,b.c);}};
+ac.onmouseleave=()=>{hovA=null;};
+
+function drawArch(){
+  ax.clearRect(0,0,AW,AH);
+  ax.strokeStyle='#0e0e16';ax.lineWidth=.3;for(let x=0;x<AW;x+=40){ax.beginPath();ax.moveTo(x,0);ax.lineTo(x,AH);ax.stroke();}for(let y=0;y<AH;y+=40){ax.beginPath();ax.moveTo(0,y);ax.lineTo(AW,y);ax.stroke();}
+  const B=getAB();
+  ax.font='600 7px "JetBrains Mono"';ax.fillStyle='#1a1a28';ax.textAlign='left';
+  ax.fillText('USER',B.user.x,B.user.y-10);ax.fillText('FUNCTIONS',B.ask.x,Math.min(B.ask.y)-18);ax.fillText('LLM LOOPS',B.retool.x,B.retool.y-18);ax.fillText('TOOL LIBRARY',B.rtools.x,B.rtools.y-10);ax.fillText('DATABASE',B.db.x,B.db.y-14);
+
+  drawAArr(B.user.x+B.user.w,B.user.y+B.user.h/2-6,B.ask.x,B.ask.y+B.ask.h/2,'#4488ff');
+  drawAArr(B.user.x+B.user.w,B.user.y+B.user.h/2+6,B.ingest.x,B.ingest.y+B.ingest.h/2,'#ffcc00');
+  drawAArr(B.ask.x+B.ask.w,B.ask.y+B.ask.h/2,B.retool.x,B.retool.y+B.retool.h/2,'#00ff88');
+  drawAArr(B.ingest.x+B.ingest.w,B.ingest.y+B.ingest.h/2,B.proctool.x,B.proctool.y+B.proctool.h/2,'#00ff88');
+  drawAArr(B.retool.x+B.retool.w,B.retool.y+B.retool.h/2,B.rtools.x,B.rtools.y+25,'#4488ff');
+  drawAArr(B.proctool.x+B.proctool.w,B.proctool.y+B.proctool.h/2-5,B.rtools.x,B.rtools.y+B.rtools.h-10,'#4488ff',1);
+  drawAArr(B.proctool.x+B.proctool.w,B.proctool.y+B.proctool.h/2+5,B.wtools.x,B.wtools.y+20,'#ffcc00');
+  drawAArr(B.rtools.x+B.rtools.w,B.rtools.y+B.rtools.h/2,B.db.x,B.db.y+B.db.h/2-4,'#4488ff');
+  drawAArr(B.wtools.x+B.wtools.w,B.wtools.y+B.wtools.h/2,B.db.x,B.db.y+B.db.h/2+4,'#ffcc00');
+
+  Object.entries(B).forEach(([k,b])=>drawABox(b,hovA&&hovA.key===k));
+
+  if(afr%55===0){spawnAP(B.user.x+B.user.w,B.user.y+B.user.h/2-6,B.ask.x,B.ask.y+B.ask.h/2,'#4488ff');spawnAP(B.ask.x+B.ask.w,B.ask.y+B.ask.h/2,B.retool.x,B.retool.y+B.retool.h/2,'#00ff88');}
+  if(afr%70===0){spawnAP(B.user.x+B.user.w,B.user.y+B.user.h/2+6,B.ingest.x,B.ingest.y+B.ingest.h/2,'#ffcc00');spawnAP(B.ingest.x+B.ingest.w,B.ingest.y+B.ingest.h/2,B.proctool.x,B.proctool.y+B.proctool.h/2,'#00ff88');}
+  if(afr%60===0){spawnAP(B.retool.x+B.retool.w,B.retool.y+B.retool.h/2,B.rtools.x,B.rtools.y+25,'#4488ff');spawnAP(B.rtools.x+B.rtools.w,B.rtools.y+B.rtools.h/2,B.db.x,B.db.y+B.db.h/2,'#00ff88');}
+  if(afr%80===0){spawnAP(B.proctool.x+B.proctool.w,B.proctool.y+B.proctool.h/2+5,B.wtools.x,B.wtools.y+20,'#ffcc00');spawnAP(B.wtools.x+B.wtools.w,B.wtools.y+B.wtools.h/2,B.db.x,B.db.y+B.db.h/2+4,'#ffcc00');}
+
+  aparts=aparts.filter(p=>{p.p+=p.sp;if(p.p>=1)return false;const x=p.x+(p.tx-p.x)*p.p,y=p.y+(p.ty-p.y)*p.p;ax.beginPath();ax.arc(x,y,p.sz,0,Math.PI*2);ax.fillStyle=p.c;ax.fill();ax.beginPath();ax.arc(x,y,p.sz*2.5,0,Math.PI*2);ax.fillStyle=p.c+'12';ax.fill();return true;});
+  afr++;
+}
+function archLoop(){drawArch();requestAnimationFrame(archLoop);}
+window.addEventListener('resize',resizeA);resizeA();archLoop();
+
+// Scroll spy
+const observer=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){document.querySelectorAll('.snav-item').forEach(s=>{s.classList.toggle('active',s.getAttribute('onclick')?.includes(e.target.id))});}});},{threshold:.3,rootMargin:'-44px 0px -60% 0px'});
+document.querySelectorAll('.section,.hero').forEach(s=>observer.observe(s));
+</script>
+</body>
+</html>
