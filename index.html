@@ -326,7 +326,10 @@
       <div class="av" id="archView">
         <canvas id="C"></canvas>
         <div class="mode-bar">
-          <button class="mode-btn on" data-mode="arch">Architecture</button>
+          <button class="mode-btn on" data-mode="arch">System</button>
+          <button class="mode-btn" data-mode="ingestMap">Ingest Flow</button>
+          <button class="mode-btn" data-mode="queryMap">Query Flow</button>
+          <button class="mode-btn" data-mode="dataMap">Data Layer</button>
           <button class="mode-btn" data-mode="graph">Force Graph</button>
         </div>
         <div class="gleg"><span><span class="v" id="sN2">20</span> nodes</span><span><span class="v" id="sE2">38</span> edges</span><span>graphista v0.1.0</span></div>
@@ -853,8 +856,8 @@ document.querySelectorAll('.rb[data-v]').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.rb').forEach(x=>x.classList.remove('on'));b.classList.add('on');
   const v=b.dataset.v;
   document.getElementById('crumb').textContent={arch:'system_architecture',graph:'force_graph',ingest:'ingest_engine',query:'smart_retrieval'}[v]||v;
-  if(v==='arch'){document.querySelectorAll('.mode-btn').forEach(x=>x.classList.toggle('on',x.dataset.mode==='arch'));mode='arch';}
-  if(v==='graph'){document.querySelectorAll('.mode-btn').forEach(x=>x.classList.toggle('on',x.dataset.mode==='graph'));mode='graph';}
+  if(v==='arch'){document.querySelectorAll('.mode-btn').forEach(x=>x.classList.toggle('on',x.dataset.mode==='arch'));mode='arch';closeArchPanel();}
+  if(v==='graph'){document.querySelectorAll('.mode-btn').forEach(x=>x.classList.toggle('on',x.dataset.mode==='graph'));mode='graph';closeArchPanel();}
   if(v==='ingest')document.getElementById('iT').focus();
   if(v==='query')document.getElementById('aIn').focus();
 });
@@ -863,7 +866,7 @@ document.getElementById('ingBtn').onclick=()=>{document.querySelector('.rb[data-
 // Mode toggle
 let mode='arch';
 document.querySelectorAll('.mode-btn').forEach(b=>b.onclick=()=>{
-  document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.mode;
+  document.querySelectorAll('.mode-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.mode;closeArchPanel();
 });
 
 // Modals
@@ -963,18 +966,40 @@ function boxAt(mx,my){
 }
 
 function drawArch(){
-  // Grid
-  cx.strokeStyle='#131313';cx.lineWidth=.4;
-  for(let x=0;x<W;x+=40){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke();}
-  for(let y=0;y<H;y+=40){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
+  drawGrid();
 
   const B=getB();
+  // Additional intermediate micro-nodes for neural-net density
+  const cx2=W/2,cy2=H/2;
+  const micro=[
+    // Between user and functions
+    {x:B.user.x+B.user.w+15,y:cy2-40,w:50,h:14,l:'parse',c:'#aa66ff'},
+    {x:B.user.x+B.user.w+15,y:cy2+26,w:50,h:14,l:'validate',c:'#aa66ff'},
+    {x:B.user.x+B.user.w+15,y:cy2-8,w:50,h:14,l:'auth',c:'#aa66ff'},
+    // Between functions and loops
+    {x:B.ask.x+B.ask.w+15,y:cy2-95,w:50,h:14,l:'embed q',c:'#4488ff'},
+    {x:B.ask.x+B.ask.w+15,y:cy2-60,w:50,h:14,l:'plan',c:'#4488ff'},
+    {x:B.ingest.x+B.ingest.w+15,y:cy2+48,w:50,h:14,l:'tokenize',c:'#ffcc00'},
+    {x:B.ingest.x+B.ingest.w+15,y:cy2+80,w:50,h:14,l:'chunk',c:'#ffcc00'},
+    // Between loops and tools
+    {x:B.retool.x+B.retool.w+10,y:cy2-110,w:45,h:14,l:'select',c:'#00ff88'},
+    {x:B.retool.x+B.retool.w+10,y:cy2-78,w:45,h:14,l:'invoke',c:'#00ff88'},
+    {x:B.proctool.x+B.proctool.w+10,y:cy2+45,w:45,h:14,l:'dedup',c:'#00ff88'},
+    {x:B.proctool.x+B.proctool.w+10,y:cy2+78,w:45,h:14,l:'merge',c:'#00ff88'},
+    // Between tools and DB
+    {x:B.rtools.x+B.rtools.w+12,y:cy2-60,w:45,h:14,l:'cache',c:'#4488ff'},
+    {x:B.rtools.x+B.rtools.w+12,y:cy2-30,w:45,h:14,l:'parse r',c:'#4488ff'},
+    {x:B.wtools.x+B.wtools.w+12,y:cy2+30,w:45,h:14,l:'commit',c:'#ffcc00'},
+    {x:B.wtools.x+B.wtools.w+12,y:cy2+60,w:45,h:14,l:'index',c:'#ffcc00'},
+  ];
+  
   drawSec(B.user.x,B.user.y-22,'SECTION_001 // USER');
   drawSec(B.ask.x,Math.min(B.answer.y,B.ask.y)-22,'SECTION_002 // FUNCTIONS');
   drawSec(B.retool.x,B.retool.y-30,'SECTION_003 // LLM_LOOPS');
   drawSec(B.rtools.x,B.rtools.y-14,'SECTION_004 // TOOLS');
   drawSec(B.db.x,B.db.y-22,'SECTION_005 // DB');
 
+  // Original main arrows
   drawArr(B.user.x+B.user.w,B.user.y+B.user.h/2-6,B.ask.x,B.ask.y+B.ask.h/2,'#4488ff');
   drawArr(B.user.x+B.user.w,B.user.y+B.user.h/2+6,B.ingest.x,B.ingest.y+B.ingest.h/2,'#ffcc00');
   drawArr(B.ask.x+B.ask.w/2,B.ask.y,B.answer.x+B.answer.w/2,B.answer.y+B.answer.h,'#4488ff',1);
@@ -989,17 +1014,75 @@ function drawArch(){
   drawArr(B.rtools.x+B.rtools.w,B.rtools.y+B.rtools.h/2,B.db.x,B.db.y+B.db.h/2-4,'#4488ff');
   drawArr(B.wtools.x+B.wtools.w,B.wtools.y+B.wtools.h/2,B.db.x,B.db.y+B.db.h/2+4,'#ffcc00');
 
+  // Micro-node connections — neural net density
+  // User → micro parse/validate/auth
+  for(let i=0;i<3;i++)drawArr(B.user.x+B.user.w,B.user.y+B.user.h/2,micro[i].x,micro[i].y+7,micro[i].c+'55');
+  // Parse/validate → ask/ingest
+  drawArr(micro[0].x+micro[0].w,micro[0].y+7,B.ask.x,B.ask.y+B.ask.h/2,'#4488ff'+'44');
+  drawArr(micro[1].x+micro[1].w,micro[1].y+7,B.ingest.x,B.ingest.y+B.ingest.h/2,'#ffcc00'+'44');
+  drawArr(micro[2].x+micro[2].w,micro[2].y+7,B.ask.x,B.ask.y+B.ask.h/2,'#4488ff'+'33');
+  drawArr(micro[2].x+micro[2].w,micro[2].y+7,B.ingest.x,B.ingest.y+B.ingest.h/2,'#ffcc00'+'33');
+  // ask → embed/plan micro → retool
+  drawArr(B.ask.x+B.ask.w,B.ask.y+4,micro[3].x,micro[3].y+7,'#4488ff'+'55');
+  drawArr(B.ask.x+B.ask.w,B.ask.y+B.ask.h-4,micro[4].x,micro[4].y+7,'#4488ff'+'55');
+  drawArr(micro[3].x+micro[3].w,micro[3].y+7,B.retool.x,B.retool.y+8,'#00ff88'+'44');
+  drawArr(micro[4].x+micro[4].w,micro[4].y+7,B.retool.x,B.retool.y+B.retool.h/2,'#00ff88'+'44');
+  // ingest → tokenize/chunk micro → proctool
+  drawArr(B.ingest.x+B.ingest.w,B.ingest.y+4,micro[5].x,micro[5].y+7,'#ffcc00'+'55');
+  drawArr(B.ingest.x+B.ingest.w,B.ingest.y+B.ingest.h-4,micro[6].x,micro[6].y+7,'#ffcc00'+'55');
+  drawArr(micro[5].x+micro[5].w,micro[5].y+7,B.proctool.x,B.proctool.y+8,'#00ff88'+'44');
+  drawArr(micro[6].x+micro[6].w,micro[6].y+7,B.proctool.x,B.proctool.y+B.proctool.h-8,'#00ff88'+'44');
+  // retool → select/invoke → rtools
+  drawArr(B.retool.x+B.retool.w,B.retool.y+6,micro[7].x,micro[7].y+7,'#00ff88'+'55');
+  drawArr(B.retool.x+B.retool.w,B.retool.y+B.retool.h-6,micro[8].x,micro[8].y+7,'#00ff88'+'55');
+  drawArr(micro[7].x+micro[7].w,micro[7].y+7,B.rtools.x,B.rtools.y+15,'#4488ff'+'44');
+  drawArr(micro[8].x+micro[8].w,micro[8].y+7,B.rtools.x,B.rtools.y+40,'#4488ff'+'44');
+  // proctool → dedup/merge → wtools
+  drawArr(B.proctool.x+B.proctool.w,B.proctool.y+6,micro[9].x,micro[9].y+7,'#00ff88'+'55');
+  drawArr(B.proctool.x+B.proctool.w,B.proctool.y+B.proctool.h-6,micro[10].x,micro[10].y+7,'#00ff88'+'55');
+  drawArr(micro[9].x+micro[9].w,micro[9].y+7,B.wtools.x,B.wtools.y+15,'#ffcc00'+'44');
+  drawArr(micro[10].x+micro[10].w,micro[10].y+7,B.wtools.x,B.wtools.y+50,'#ffcc00'+'44');
+  // Cross-links: dedup also reads
+  drawArr(micro[9].x+micro[9].w,micro[9].y+3,B.rtools.x,B.rtools.y+B.rtools.h-15,'#4488ff'+'33');
+  // rtools → cache/parse → db
+  drawArr(B.rtools.x+B.rtools.w,B.rtools.y+25,micro[11].x,micro[11].y+7,'#4488ff'+'55');
+  drawArr(B.rtools.x+B.rtools.w,B.rtools.y+55,micro[12].x,micro[12].y+7,'#4488ff'+'55');
+  drawArr(micro[11].x+micro[11].w,micro[11].y+7,B.db.x,B.db.y+6,'#00ff88'+'44');
+  drawArr(micro[12].x+micro[12].w,micro[12].y+7,B.db.x,B.db.y+B.db.h/2,'#00ff88'+'44');
+  // wtools → commit/index → db
+  drawArr(B.wtools.x+B.wtools.w,B.wtools.y+25,micro[13].x,micro[13].y+7,'#ffcc00'+'55');
+  drawArr(B.wtools.x+B.wtools.w,B.wtools.y+55,micro[14].x,micro[14].y+7,'#ffcc00'+'55');
+  drawArr(micro[13].x+micro[13].w,micro[13].y+7,B.db.x,B.db.y+B.db.h/2,'#ffcc00'+'44');
+  drawArr(micro[14].x+micro[14].w,micro[14].y+7,B.db.x,B.db.y+B.db.h-6,'#ffcc00'+'44');
+  // Cross-layer links for neural-net feel
+  drawArr(micro[3].x+micro[3].w,micro[3].y+7,micro[7].x,micro[7].y+7,'#00ff88'+'22');
+  drawArr(micro[4].x+micro[4].w,micro[4].y+7,micro[8].x,micro[8].y+7,'#00ff88'+'22');
+  drawArr(micro[5].x+micro[5].w,micro[5].y+7,micro[9].x,micro[9].y+7,'#00ff88'+'22');
+  drawArr(micro[6].x+micro[6].w,micro[6].y+7,micro[10].x,micro[10].y+7,'#00ff88'+'22');
+  drawArr(micro[7].x+micro[7].w,micro[7].y+7,micro[11].x,micro[11].y+7,'#4488ff'+'22');
+  drawArr(micro[8].x+micro[8].w,micro[8].y+7,micro[12].x,micro[12].y+7,'#4488ff'+'22');
+  drawArr(micro[9].x+micro[9].w,micro[9].y+7,micro[13].x,micro[13].y+7,'#ffcc00'+'22');
+  drawArr(micro[10].x+micro[10].w,micro[10].y+7,micro[14].x,micro[14].y+7,'#ffcc00'+'22');
+
   drawLoop(B.retool.x,B.retool.y,B.retool.w,'#00ff88');
   drawLoop(B.proctool.x,B.proctool.y,B.proctool.w,'#00ff88');
 
+  // Draw micro nodes
+  micro.forEach(m=>drawBox(m,false,false));
+  // Draw main boxes on top
   Object.entries(B).forEach(([k,b])=>drawBox(b,hoveredBox&&hoveredBox.key===k,archPanelOpen&&archPanelKey===k));
 
-  // Particles
-  if(fr%50===0){spawnP(B.user.x+B.user.w,B.user.y+B.user.h/2-6,B.ask.x,B.ask.y+B.ask.h/2,'#4488ff');spawnP(B.ask.x+B.ask.w,B.ask.y+B.ask.h/2,B.retool.x,B.retool.y+B.retool.h/2,'#00ff88');}
-  if(fr%70===0){spawnP(B.user.x+B.user.w,B.user.y+B.user.h/2+6,B.ingest.x,B.ingest.y+B.ingest.h/2,'#ffcc00');spawnP(B.ingest.x+B.ingest.w,B.ingest.y+B.ingest.h/2,B.proctool.x,B.proctool.y+B.proctool.h/2,'#00ff88');}
-  if(fr%65===0){spawnP(B.retool.x+B.retool.w,B.retool.y+B.retool.h/2,B.rtools.x,B.rtools.y+25,'#4488ff');spawnP(B.rtools.x+B.rtools.w,B.rtools.y+B.rtools.h/2,B.db.x,B.db.y+B.db.h/2,'#00ff88');}
-  if(fr%80===0){spawnP(B.proctool.x+B.proctool.w,B.proctool.y+B.proctool.h/2+6,B.wtools.x,B.wtools.y+25,'#ffcc00');spawnP(B.wtools.x+B.wtools.w,B.wtools.y+B.wtools.h/2,B.db.x,B.db.y+B.db.h/2+4,'#ffcc00');}
-  if(fr%100===0){spawnP(B.answer.x,B.answer.y+B.answer.h/2,B.user.x+B.user.w,B.user.y+B.user.h/2-12,'#4488ff');spawnP(B.result.x,B.result.y+B.result.h/2,B.user.x+B.user.w,B.user.y+B.user.h/2+12,'#ffcc00');}
+  // Particles — more frequent for density
+  if(fr%35===0){spawnP(B.user.x+B.user.w,B.user.y+B.user.h/2-6,B.ask.x,B.ask.y+B.ask.h/2,'#4488ff');spawnP(B.ask.x+B.ask.w,B.ask.y+B.ask.h/2,B.retool.x,B.retool.y+B.retool.h/2,'#00ff88');}
+  if(fr%45===0){spawnP(B.user.x+B.user.w,B.user.y+B.user.h/2+6,B.ingest.x,B.ingest.y+B.ingest.h/2,'#ffcc00');spawnP(B.ingest.x+B.ingest.w,B.ingest.y+B.ingest.h/2,B.proctool.x,B.proctool.y+B.proctool.h/2,'#00ff88');}
+  if(fr%40===0){spawnP(B.retool.x+B.retool.w,B.retool.y+B.retool.h/2,B.rtools.x,B.rtools.y+25,'#4488ff');spawnP(B.rtools.x+B.rtools.w,B.rtools.y+B.rtools.h/2,B.db.x,B.db.y+B.db.h/2,'#00ff88');}
+  if(fr%50===0){spawnP(B.proctool.x+B.proctool.w,B.proctool.y+B.proctool.h/2+6,B.wtools.x,B.wtools.y+25,'#ffcc00');spawnP(B.wtools.x+B.wtools.w,B.wtools.y+B.wtools.h/2,B.db.x,B.db.y+B.db.h/2+4,'#ffcc00');}
+  if(fr%60===0){spawnP(B.answer.x,B.answer.y+B.answer.h/2,B.user.x+B.user.w,B.user.y+B.user.h/2-12,'#4488ff');spawnP(B.result.x,B.result.y+B.result.h/2,B.user.x+B.user.w,B.user.y+B.user.h/2+12,'#ffcc00');}
+  // Micro-node particles
+  if(fr%25===0){const i=Math.floor(Math.random()*3);spawnP(B.user.x+B.user.w,B.user.y+B.user.h/2,micro[i].x,micro[i].y+7,micro[i].c);}
+  if(fr%30===0){const i=3+Math.floor(Math.random()*4);const tx=i<5?B.retool.x:B.proctool.x;const ty=i<5?B.retool.y+B.retool.h/2:B.proctool.y+B.proctool.h/2;spawnP(micro[i].x+micro[i].w,micro[i].y+7,tx,ty,micro[i].c);}
+  if(fr%28===0){const i=7+Math.floor(Math.random()*4);spawnP(micro[i].x+micro[i].w,micro[i].y+7,i<9?B.rtools.x:B.wtools.x,cy2,micro[i].c);}
+  if(fr%32===0){const i=11+Math.floor(Math.random()*4);spawnP(micro[i].x+micro[i].w,micro[i].y+7,B.db.x,B.db.y+B.db.h/2,micro[i].c);}
 }
 
 // ===== FORCE GRAPH DRAWING =====
@@ -1028,22 +1111,372 @@ function drawGraph(){
   cx.restore();
 }
 
+// ===== INGEST FLOW MAP =====
+function drawIngestMap(){
+  drawGrid();
+  const cx2=W/2,cy=H/2;
+  const B=[
+    {x:cx2-400,y:cy-10,w:70,h:22,l:'Raw Text',c:'#aa66ff'},
+    {x:cx2-290,y:cy-10,w:70,h:22,l:'ingest()',c:'#ffcc00'},
+    {x:cx2-175,y:cy-80,w:85,h:20,l:'LLM Extract',c:'#00ff88'},
+    {x:cx2-175,y:cy-44,w:85,h:20,l:'Tokenizer',c:'#00dddd'},
+    {x:cx2-175,y:cy-8,w:85,h:20,l:'Ontology Match',c:'#4488ff'},
+    {x:cx2-175,y:cy+28,w:85,h:20,l:'Schema Validate',c:'#aa66ff'},
+    {x:cx2-175,y:cy+64,w:85,h:20,l:'Chunk Splitter',c:'#ff8844'},
+    {x:cx2-40,y:cy-80,w:85,h:20,l:'Entity List',c:'#4488ff'},
+    {x:cx2-40,y:cy-44,w:85,h:20,l:'Relation List',c:'#00ff88'},
+    {x:cx2-40,y:cy-8,w:85,h:20,l:'Dedup Check',c:'#ff8844'},
+    {x:cx2-40,y:cy+28,w:85,h:20,l:'Similarity 0.92',c:'#ffcc00'},
+    {x:cx2-40,y:cy+64,w:85,h:20,l:'Merge Logic',c:'#aa66ff'},
+    {x:cx2+95,y:cy-80,w:85,h:20,l:'Embed ada-002',c:'#4488ff'},
+    {x:cx2+95,y:cy-44,w:85,h:20,l:'Batch Embed',c:'#00dddd'},
+    {x:cx2+95,y:cy-8,w:85,h:20,l:'Create Nodes',c:'#00ff88'},
+    {x:cx2+95,y:cy+28,w:85,h:20,l:'Create Edges',c:'#00ff88'},
+    {x:cx2+95,y:cy+64,w:85,h:20,l:'Update Props',c:'#ffcc00'},
+    {x:cx2+230,y:cy-60,w:80,h:20,l:'Vector Index',c:'#00dddd'},
+    {x:cx2+230,y:cy-24,w:80,h:20,l:'Node Store',c:'#00ff88'},
+    {x:cx2+230,y:cy+12,w:80,h:20,l:'Edge Store',c:'#00ff88'},
+    {x:cx2+230,y:cy+48,w:80,h:20,l:'Embed Store',c:'#4488ff'},
+    {x:cx2+355,y:cy-20,w:80,h:22,l:'GraphDB',c:'#00ff88'},
+    {x:cx2+355,y:cy+16,w:80,h:22,l:'Result {id}',c:'#ffcc00'},
+  ];
+  drawSec(B[0].x,B[0].y-18,'INPUT');drawSec(B[2].x,B[2].y-18,'PROCESSING');drawSec(B[7].x,B[7].y-18,'EXTRACTION');drawSec(B[12].x,B[12].y-18,'MUTATION');drawSec(B[17].x,B[17].y-18,'STORAGE');drawSec(B[21].x,B[21].y-18,'OUTPUT');
+  // Dense connections
+  drawArr(B[0].x+B[0].w,B[0].y+11,B[1].x,B[1].y+11,'#ffcc00');
+  for(let i=2;i<=6;i++)drawArr(B[1].x+B[1].w,B[1].y+11,B[i].x,B[i].y+10,B[i].c);
+  // Processing → Extraction (cross-links)
+  const pLinks=[[2,7],[2,8],[3,7],[3,9],[4,8],[4,9],[5,10],[5,11],[6,9],[6,11]];
+  pLinks.forEach(([a,b])=>drawArr(B[a].x+B[a].w,B[a].y+10,B[b].x,B[b].y+10,B[b].c+'88'));
+  // Extraction → Mutation
+  const eLinks=[[7,12],[7,14],[8,15],[9,14],[9,12],[10,13],[10,16],[11,14],[11,16]];
+  eLinks.forEach(([a,b])=>drawArr(B[a].x+B[a].w,B[a].y+10,B[b].x,B[b].y+10,B[b].c+'88'));
+  // Mutation → Storage
+  const mLinks=[[12,17],[12,20],[13,17],[13,20],[14,18],[15,19],[16,18],[16,20]];
+  mLinks.forEach(([a,b])=>drawArr(B[a].x+B[a].w,B[a].y+10,B[b].x,B[b].y+10,B[b].c+'88'));
+  // Storage → output
+  for(let i=17;i<=20;i++){drawArr(B[i].x+B[i].w,B[i].y+10,B[21].x,B[21].y+11,B[i].c+'66');drawArr(B[i].x+B[i].w,B[i].y+10,B[22].x,B[22].y+11,'#ffcc00'+'44');}
+  drawLoop(B[9].x,B[9].y,B[9].w,'#ff8844');
+  B.forEach(b=>drawBox(b,false,false));
+  // Particles
+  if(fr%30===0)spawnP(B[0].x+B[0].w,B[0].y+11,B[1].x,B[1].y+11,'#ffcc00');
+  if(fr%25===0){const i=2+Math.floor(Math.random()*5);spawnP(B[1].x+B[1].w,B[1].y+11,B[i].x,B[i].y+10,B[i].c);}
+  if(fr%20===0){const p=pLinks[Math.floor(Math.random()*pLinks.length)];spawnP(B[p[0]].x+B[p[0]].w,B[p[0]].y+10,B[p[1]].x,B[p[1]].y+10,B[p[1]].c);}
+  if(fr%22===0){const e=eLinks[Math.floor(Math.random()*eLinks.length)];spawnP(B[e[0]].x+B[e[0]].w,B[e[0]].y+10,B[e[1]].x,B[e[1]].y+10,B[e[1]].c);}
+  if(fr%28===0){const m=mLinks[Math.floor(Math.random()*mLinks.length)];spawnP(B[m[0]].x+B[m[0]].w,B[m[0]].y+10,B[m[1]].x,B[m[1]].y+10,B[m[1]].c);}
+  if(fr%35===0){const i=17+Math.floor(Math.random()*4);spawnP(B[i].x+B[i].w,B[i].y+10,B[21].x,B[21].y+11,'#00ff88');}
+}
+
+// ===== QUERY FLOW MAP =====
+function drawQueryMap(){
+  drawGrid();
+  const cx2=W/2,cy=H/2;
+  const B=[
+    {x:cx2-400,y:cy-10,w:70,h:22,l:'Question',c:'#aa66ff'},
+    {x:cx2-290,y:cy-10,w:60,h:22,l:'ask()',c:'#4488ff'},
+    {x:cx2-185,y:cy-70,w:85,h:20,l:'Parse Intent',c:'#00dddd'},
+    {x:cx2-185,y:cy-34,w:85,h:20,l:'Embed Query',c:'#4488ff'},
+    {x:cx2-185,y:cy+2,w:85,h:20,l:'Context Init',c:'#ffcc00'},
+    {x:cx2-185,y:cy+38,w:85,h:20,l:'Plan Strategy',c:'#aa66ff'},
+    {x:cx2-50,y:cy-90,w:95,h:22,l:'SmartRetrieval',c:'#00ff88'},
+    {x:cx2-50,y:cy-54,w:95,h:20,l:'LLM Decide',c:'#00ff88'},
+    {x:cx2-50,y:cy-20,w:95,h:20,l:'Execute Tool',c:'#4488ff'},
+    {x:cx2-50,y:cy+14,w:95,h:20,l:'Parse Result',c:'#ffcc00'},
+    {x:cx2-50,y:cy+48,w:95,h:20,l:'Append Context',c:'#ff8844'},
+    {x:cx2-50,y:cy+80,w:95,h:20,l:'Check Done?',c:'#aa66ff'},
+    {x:cx2+100,y:cy-90,w:80,h:20,l:'vector_search',c:'#4488ff'},
+    {x:cx2+100,y:cy-58,w:80,h:20,l:'get_edges',c:'#4488ff'},
+    {x:cx2+100,y:cy-26,w:80,h:20,l:'find_similar',c:'#4488ff'},
+    {x:cx2+100,y:cy+6,w:80,h:20,l:'get_connected',c:'#4488ff'},
+    {x:cx2+100,y:cy+38,w:80,h:20,l:'get_property',c:'#4488ff'},
+    {x:cx2+100,y:cy+70,w:80,h:20,l:'query(cypher)',c:'#4488ff'},
+    {x:cx2+230,y:cy-70,w:75,h:20,l:'Vector Idx',c:'#00dddd'},
+    {x:cx2+230,y:cy-34,w:75,h:20,l:'Node Store',c:'#00ff88'},
+    {x:cx2+230,y:cy+2,w:75,h:20,l:'Edge Store',c:'#00ff88'},
+    {x:cx2+230,y:cy+38,w:75,h:20,l:'Embed Store',c:'#4488ff'},
+    {x:cx2+355,y:cy-30,w:80,h:22,l:'GraphDB',c:'#00ff88'},
+    {x:cx2-290,y:cy+70,w:180,h:22,l:'Synthesize → Answer {cot}',c:'#00ff88'},
+  ];
+  drawSec(B[0].x,B[0].y-18,'USER');drawSec(B[2].x,B[2].y-18,'PREPARATION');drawSec(B[6].x,B[6].y-18,'LLM LOOP');drawSec(B[12].x,B[12].y-18,'READ TOOLS');drawSec(B[18].x,B[18].y-18,'STORAGE');drawSec(B[22].x,B[22].y-18,'DATABASE');
+  drawArr(B[0].x+B[0].w,B[0].y+11,B[1].x,B[1].y+11,'#4488ff');
+  for(let i=2;i<=5;i++)drawArr(B[1].x+B[1].w,B[1].y+11,B[i].x,B[i].y+10,B[i].c);
+  // Prep → Loop
+  const pL=[[2,7],[3,7],[3,8],[4,7],[4,10],[5,7]];
+  pL.forEach(([a,b])=>drawArr(B[a].x+B[a].w,B[a].y+10,B[b].x,B[b].y+10,B[b].c+'88'));
+  // Loop internal chain
+  drawArr(B[7].x+B[7].w/2,B[7].y+B[7].h,B[8].x+B[8].w/2,B[8].y,'#4488ff');
+  drawArr(B[8].x+B[8].w/2,B[8].y+B[8].h,B[9].x+B[9].w/2,B[9].y,'#ffcc00');
+  drawArr(B[9].x+B[9].w/2,B[9].y+B[9].h,B[10].x+B[10].w/2,B[10].y,'#ff8844');
+  drawArr(B[10].x+B[10].w/2,B[10].y+B[10].h,B[11].x+B[11].w/2,B[11].y,'#aa66ff');
+  drawArr(B[11].x,B[11].y+10,B[7].x-6,B[7].y+10,'#00ff88',1); // loop back
+  drawArr(B[11].x+B[11].w/2,B[11].y+B[11].h,B[23].x+B[23].w,B[23].y+11,'#00ff88'); // to synthesize
+  drawLoop(B[6].x,B[6].y,B[6].w,'#00ff88');
+  // Execute → all tools
+  for(let i=12;i<=17;i++)drawArr(B[8].x+B[8].w,B[8].y+10,B[i].x,B[i].y+10,B[i].c+'88');
+  // Tools → storage (cross-links)
+  const tS=[[12,18],[12,21],[13,19],[13,20],[14,18],[14,19],[15,19],[15,20],[16,19],[17,19],[17,20]];
+  tS.forEach(([a,b])=>drawArr(B[a].x+B[a].w,B[a].y+10,B[b].x,B[b].y+10,B[b].c+'66'));
+  // Storage → DB
+  for(let i=18;i<=21;i++)drawArr(B[i].x+B[i].w,B[i].y+10,B[22].x,B[22].y+11,B[i].c+'66');
+  B.forEach(b=>drawBox(b,false,false));
+  // Particles
+  if(fr%30===0)spawnP(B[0].x+B[0].w,B[0].y+11,B[1].x,B[1].y+11,'#4488ff');
+  if(fr%22===0){const i=2+Math.floor(Math.random()*4);spawnP(B[1].x+B[1].w,B[1].y+11,B[i].x,B[i].y+10,B[i].c);}
+  if(fr%18===0){const i=12+Math.floor(Math.random()*6);spawnP(B[8].x+B[8].w,B[8].y+10,B[i].x,B[i].y+10,'#4488ff');}
+  if(fr%20===0){const t=tS[Math.floor(Math.random()*tS.length)];spawnP(B[t[0]].x+B[t[0]].w,B[t[0]].y+10,B[t[1]].x,B[t[1]].y+10,B[t[1]].c);}
+  if(fr%25===0){const i=18+Math.floor(Math.random()*4);spawnP(B[i].x+B[i].w,B[i].y+10,B[22].x,B[22].y+11,'#00ff88');}
+  if(fr%40===0)spawnP(B[7].x+B[7].w/2,B[7].y+B[7].h,B[8].x+B[8].w/2,B[8].y,'#4488ff');
+}
+
+// ===== DATA LAYER MAP =====
+function drawDataMap(){
+  drawGrid();
+  const cx2=W/2,cy=H/2;
+  const B=[
+    // Col 0: Node types
+    {x:cx2-400,y:cy-90,w:80,h:18,l:'Person',c:'#4488ff'},
+    {x:cx2-400,y:cy-60,w:80,h:18,l:'Company',c:'#aa66ff'},
+    {x:cx2-400,y:cy-30,w:80,h:18,l:'Concept',c:'#ffcc00'},
+    {x:cx2-400,y:cy,w:80,h:18,l:'Document',c:'#00dddd'},
+    {x:cx2-400,y:cy+30,w:80,h:18,l:'Protocol',c:'#ff8844'},
+    {x:cx2-400,y:cy+60,w:80,h:18,l:'Token',c:'#ff66aa'},
+    // Col 1: Properties
+    {x:cx2-270,y:cy-80,w:75,h:18,l:'name',c:'#4488ff'},
+    {x:cx2-270,y:cy-50,w:75,h:18,l:'role',c:'#4488ff'},
+    {x:cx2-270,y:cy-20,w:75,h:18,l:'industry',c:'#aa66ff'},
+    {x:cx2-270,y:cy+10,w:75,h:18,l:'content',c:'#00dddd'},
+    {x:cx2-270,y:cy+40,w:75,h:18,l:'tvl',c:'#ffcc00'},
+    {x:cx2-270,y:cy+70,w:75,h:18,l:'ticker',c:'#ff66aa'},
+    // Col 2: Edge types
+    {x:cx2-145,y:cy-90,w:80,h:18,l:'WORKS_AT',c:'#00ff88'},
+    {x:cx2-145,y:cy-62,w:80,h:18,l:'FOUNDED',c:'#00ff88'},
+    {x:cx2-145,y:cy-34,w:80,h:18,l:'USES',c:'#00ff88'},
+    {x:cx2-145,y:cy-6,w:80,h:18,l:'POWERS',c:'#00ff88'},
+    {x:cx2-145,y:cy+22,w:80,h:18,l:'CO_FOUNDED',c:'#00ff88'},
+    {x:cx2-145,y:cy+50,w:80,h:18,l:'EXPLOITED',c:'#ff4444'},
+    {x:cx2-145,y:cy+78,w:80,h:18,l:'RIVALED',c:'#ff8844'},
+    // Col 3: Embeddings
+    {x:cx2-15,y:cy-70,w:80,h:18,l:'ada-002',c:'#00dddd'},
+    {x:cx2-15,y:cy-40,w:80,h:18,l:'1536-dim',c:'#00dddd'},
+    {x:cx2-15,y:cy-10,w:80,h:18,l:'Cosine Sim',c:'#4488ff'},
+    {x:cx2-15,y:cy+20,w:80,h:18,l:'HNSW Index',c:'#aa66ff'},
+    {x:cx2-15,y:cy+50,w:80,h:18,l:'Batch Embed',c:'#ffcc00'},
+    // Col 4: Router
+    {x:cx2+115,y:cy-80,w:80,h:18,l:'CRUD API',c:'#00ff88'},
+    {x:cx2+115,y:cy-50,w:80,h:18,l:'Path Query',c:'#00ff88'},
+    {x:cx2+115,y:cy-20,w:80,h:18,l:'Batch Ops',c:'#ffcc00'},
+    {x:cx2+115,y:cy+10,w:80,h:18,l:'Vector Idx',c:'#00dddd'},
+    {x:cx2+115,y:cy+40,w:80,h:18,l:'Schema Mgr',c:'#aa66ff'},
+    {x:cx2+115,y:cy+70,w:80,h:18,l:'Transaction',c:'#ff8844'},
+    // Col 5: Backends
+    {x:cx2+245,y:cy-80,w:80,h:18,l:'Local JSON',c:'#ffcc00'},
+    {x:cx2+245,y:cy-50,w:80,h:18,l:'Neo4j',c:'#4488ff'},
+    {x:cx2+245,y:cy-20,w:80,h:18,l:'FalkorDB',c:'#aa66ff'},
+    {x:cx2+245,y:cy+10,w:80,h:18,l:'Vector DB',c:'#00dddd'},
+    {x:cx2+245,y:cy+40,w:80,h:18,l:'File Store',c:'#ff8844'},
+    {x:cx2+245,y:cy+70,w:80,h:18,l:'Cache Layer',c:'#00ff88'},
+    // Col 6: Output
+    {x:cx2+375,y:cy-25,w:70,h:22,l:'GraphDB',c:'#00ff88'},
+    {x:cx2+375,y:cy+10,w:70,h:22,l:'Ready',c:'#ffcc00'},
+  ];
+  drawSec(B[0].x,B[0].y-18,'NODES');drawSec(B[6].x,B[6].y-18,'PROPERTIES');drawSec(B[12].x,B[12].y-18,'EDGES');drawSec(B[19].x,B[19].y-18,'VECTORS');drawSec(B[24].x,B[24].y-18,'ROUTER');drawSec(B[30].x,B[30].y-18,'BACKENDS');
+  // Dense neural-net style: nodes → props
+  for(let i=0;i<6;i++)for(let j=6;j<12;j++)drawArr(B[i].x+B[i].w,B[i].y+9,B[j].x,B[j].y+9,B[j].c+'22');
+  // Props → edges
+  for(let i=6;i<12;i++)for(let j=12;j<19;j++)drawArr(B[i].x+B[i].w,B[i].y+9,B[j].x,B[j].y+9,B[j].c+'22');
+  // Edges → vectors
+  for(let i=12;i<19;i++)for(let j=19;j<24;j++)drawArr(B[i].x+B[i].w,B[i].y+9,B[j].x,B[j].y+9,B[j].c+'22');
+  // Vectors → router
+  for(let i=19;i<24;i++)for(let j=24;j<30;j++)drawArr(B[i].x+B[i].w,B[i].y+9,B[j].x,B[j].y+9,B[j].c+'22');
+  // Router → backends
+  for(let i=24;i<30;i++)for(let j=30;j<36;j++)drawArr(B[i].x+B[i].w,B[i].y+9,B[j].x,B[j].y+9,B[j].c+'22');
+  // Backends → output
+  for(let i=30;i<36;i++){drawArr(B[i].x+B[i].w,B[i].y+9,B[36].x,B[36].y+11,B[36].c+'44');drawArr(B[i].x+B[i].w,B[i].y+9,B[37].x,B[37].y+11,B[37].c+'33');}
+  B.forEach(b=>drawBox(b,false,false));
+  // Lots of particles flowing through the network
+  if(fr%12===0){const i=Math.floor(Math.random()*6),j=6+Math.floor(Math.random()*6);spawnP(B[i].x+B[i].w,B[i].y+9,B[j].x,B[j].y+9,B[j].c);}
+  if(fr%14===0){const i=6+Math.floor(Math.random()*6),j=12+Math.floor(Math.random()*7);spawnP(B[i].x+B[i].w,B[i].y+9,B[j].x,B[j].y+9,B[j].c);}
+  if(fr%16===0){const i=12+Math.floor(Math.random()*7),j=19+Math.floor(Math.random()*5);spawnP(B[i].x+B[i].w,B[i].y+9,B[j].x,B[j].y+9,B[j].c);}
+  if(fr%18===0){const i=19+Math.floor(Math.random()*5),j=24+Math.floor(Math.random()*6);spawnP(B[i].x+B[i].w,B[i].y+9,B[j].x,B[j].y+9,B[j].c);}
+  if(fr%20===0){const i=24+Math.floor(Math.random()*6),j=30+Math.floor(Math.random()*6);spawnP(B[i].x+B[i].w,B[i].y+9,B[j].x,B[j].y+9,B[j].c);}
+  if(fr%25===0){const i=30+Math.floor(Math.random()*6);spawnP(B[i].x+B[i].w,B[i].y+9,B[36].x,B[36].y+11,'#00ff88');}
+}
+
+function drawGrid(){
+  // Base grid
+  cx.strokeStyle='#0e0e14';cx.lineWidth=.3;
+  for(let x=0;x<W;x+=40){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke();}
+  for(let y=0;y<H;y+=40){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
+  // Brighter grid every 200px
+  cx.strokeStyle='#14141e';cx.lineWidth=.5;
+  for(let x=0;x<W;x+=200){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke();}
+  for(let y=0;y<H;y+=200){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
+}
+
+// HUD scrolling code lines
+const HUD_CODE=[
+  'memory.db.vector_search("ethereum", k=5)',
+  'node = get_node_by_property("name", "Vitalik")',
+  'edges = get_edges(node.id) # 6 connections',
+  'embedding = generate_embedding(node.properties)',
+  'similar = find_similar_nodes(embedding, k=3)',
+  'create_edge(src, tgt, "co_founded")',
+  'result = SmartRetrievalTool.run(question)',
+  'context.append(tool_result)',
+  'answer = llm.synthesize(context)',
+  'batch_create_nodes([...entities])',
+  'dedup_check: similarity=0.94 → merge',
+  'SmartNodeProcessor.process(entity_list)',
+  'ontology.validate(node_type="Person")',
+  'graph.commit() # 3 nodes, 5 edges',
+  'vector_index.add(embedding, node_id)',
+  'query("MATCH (p)-[:WORKS_AT]->(c) RETURN p")',
+  'chunk_splitter.split(text, max_tokens=512)',
+  'tokenizer.encode(text) # 847 tokens',
+  'cache.set(query_hash, result, ttl=300)',
+  'path = find_path("Person","Company",depth=3)',
+];
+const HUD_STATS=['nodes','edges','embeddings','queries','latency_ms','throughput','cache_hits','loop_iter','dedup_rate','uptime'];
+
+function drawHUD(){
+  // Horizontal scan line
+  const scanY=(fr*1.2)%H;
+  cx.save();
+  cx.globalAlpha=.06;
+  cx.fillStyle='#00ff88';
+  cx.fillRect(0,scanY,W,1);
+  const grad=cx.createLinearGradient(0,scanY-15,0,scanY+15);
+  grad.addColorStop(0,'transparent');grad.addColorStop(.5,'#00ff8808');grad.addColorStop(1,'transparent');
+  cx.fillStyle=grad;cx.fillRect(0,scanY-15,W,30);
+  cx.restore();
+
+  // Vertical scan line
+  const scanX=(fr*0.8)%W;
+  cx.save();cx.globalAlpha=.04;cx.fillStyle='#4488ff';cx.fillRect(scanX,0,1,H);cx.restore();
+
+  if(mode==='graph')return; // Skip HUD on force graph
+
+  // Bottom-left scrolling code
+  cx.save();
+  cx.font='400 7px "JetBrains Mono"';
+  const codeY=H-12;
+  for(let i=0;i<6;i++){
+    const idx=(Math.floor(fr/90)+i)%HUD_CODE.length;
+    const alpha=.12-(i*.018);
+    cx.globalAlpha=Math.max(alpha,0);
+    cx.fillStyle='#00ff88';
+    cx.textAlign='left';
+    const lineOffset=(fr%90)/90*10;
+    cx.fillText('> '+HUD_CODE[idx],10,codeY-i*10-lineOffset);
+  }
+  cx.restore();
+
+  // Top-right telemetry
+  cx.save();
+  cx.font='500 7px "JetBrains Mono"';
+  cx.textAlign='right';
+  for(let i=0;i<5;i++){
+    const idx=(Math.floor(fr/120)+i)%HUD_STATS.length;
+    const val=mode==='arch'?Math.floor(Math.random()*900+100):Math.floor(Math.random()*500+50);
+    cx.globalAlpha=.1-(i*.015);
+    cx.fillStyle='#4488ff';
+    cx.fillText(HUD_STATS[idx]+': '+val,W-10,16+i*11);
+  }
+  cx.restore();
+
+  // Bottom-right system status
+  cx.save();
+  cx.font='400 6px "JetBrains Mono"';cx.textAlign='right';cx.globalAlpha=.12;
+  cx.fillStyle='#00ff88';
+  const statuses=['GRAPH_ACTIVE','LLM_LOOP_OK','VECTOR_IDX_READY','DB_CONNECTED','EMBEDDING_ONLINE'];
+  statuses.forEach((s,i)=>{
+    cx.fillText('[✓] '+s,W-10,H-10-i*9);
+  });
+  cx.restore();
+
+  // Top-left mode label + frame counter
+  cx.save();
+  cx.font='600 8px "JetBrains Mono"';cx.textAlign='left';cx.globalAlpha=.1;
+  cx.fillStyle='#00ff88';
+  const modeLabels={arch:'SYSTEM_ARCHITECTURE',ingestMap:'INGEST_PIPELINE',queryMap:'QUERY_PIPELINE',dataMap:'DATA_LAYER'};
+  cx.fillText('// '+(modeLabels[mode]||mode),10,14);
+  cx.font='400 6px "JetBrains Mono"';cx.fillStyle='#444';
+  cx.fillText('fr:'+fr+' | particles:'+particles.length+' | mode:'+mode,10,24);
+  cx.restore();
+
+  // Floating code snippets that drift across
+  cx.save();
+  const driftX=(fr*0.3)%W;
+  cx.font='400 6px "JetBrains Mono"';cx.globalAlpha=.04;cx.fillStyle='#00ff88';cx.textAlign='left';
+  cx.fillText('def ask(self, question):',driftX,H*0.2);
+  cx.fillText('embedding = embed(text)',driftX-200,H*0.35);
+  cx.fillText('for node in graph.traverse():',driftX+100,H*0.7);
+  cx.fillText('yield context.append(result)',(driftX+300)%W,H*0.85);
+  cx.fillStyle='#4488ff';
+  cx.fillText('SmartRetrievalTool.chain_of_thought()',(driftX+150)%W,H*0.15);
+  cx.fillStyle='#ffcc00';
+  cx.fillText('SmartNodeProcessor.dedup(entity)',(driftX+400)%W,H*0.55);
+  cx.restore();
+
+  // Corner brackets
+  cx.save();cx.strokeStyle='#00ff8815';cx.lineWidth=1;
+  // Top-left
+  cx.beginPath();cx.moveTo(4,20);cx.lineTo(4,4);cx.lineTo(20,4);cx.stroke();
+  // Top-right
+  cx.beginPath();cx.moveTo(W-20,4);cx.lineTo(W-4,4);cx.lineTo(W-4,20);cx.stroke();
+  // Bottom-left
+  cx.beginPath();cx.moveTo(4,H-20);cx.lineTo(4,H-4);cx.lineTo(20,H-4);cx.stroke();
+  // Bottom-right
+  cx.beginPath();cx.moveTo(W-20,H-4);cx.lineTo(W-4,H-4);cx.lineTo(W-4,H-20);cx.stroke();
+  cx.restore();
+
+  // Pulse rings (radar-like) from center
+  cx.save();
+  const pulseR=((fr*0.8)%200);
+  cx.globalAlpha=Math.max(0,.04-pulseR/5000);
+  cx.strokeStyle='#00ff88';cx.lineWidth=.5;
+  cx.beginPath();cx.arc(W/2,H/2,pulseR,0,Math.PI*2);cx.stroke();
+  cx.beginPath();cx.arc(W/2,H/2,pulseR+80,0,Math.PI*2);cx.stroke();
+  cx.restore();
+
+  // Mini sparkline in bottom-right
+  cx.save();
+  cx.strokeStyle='#00ff8818';cx.lineWidth=.5;cx.beginPath();
+  for(let i=0;i<60;i++){
+    const sv=Math.sin((fr+i*3)*.05)*6+Math.sin((fr+i*5)*.03)*4;
+    if(i===0)cx.moveTo(W-70+i,H-60+sv);else cx.lineTo(W-70+i,H-60+sv);
+  }
+  cx.stroke();
+  cx.restore();
+}
+
 // ===== MAIN LOOP =====
 function loop(){
   cx.clearRect(0,0,W,H);
   sim();
 
   if(mode==='arch') drawArch();
+  else if(mode==='ingestMap') drawIngestMap();
+  else if(mode==='queryMap') drawQueryMap();
+  else if(mode==='dataMap') drawDataMap();
   else drawGraph();
 
-  // Particles (both modes)
+  // Particles (all modes) — enhanced with trails
   particles=particles.filter(p=>{
     p.p+=p.sp;if(p.p>=1)return false;
     const x=p.x+(p.tx-p.x)*p.p,y=p.y+(p.ty-p.y)*p.p;
+    // Trail
+    const px2=p.x+(p.tx-p.x)*Math.max(0,p.p-.03),py2=p.y+(p.ty-p.y)*Math.max(0,p.p-.03);
+    cx.save();cx.globalAlpha=.15;cx.strokeStyle=p.c;cx.lineWidth=.4;
+    cx.beginPath();cx.moveTo(px2,py2);cx.lineTo(x,y);cx.stroke();cx.restore();
+    // Core
     cx.beginPath();cx.arc(x,y,p.sz,0,Math.PI*2);cx.fillStyle=p.c;cx.fill();
-    cx.beginPath();cx.arc(x,y,p.sz*2.5,0,Math.PI*2);cx.fillStyle=p.c+'12';cx.fill();
+    // Glow
+    cx.beginPath();cx.arc(x,y,p.sz*3,0,Math.PI*2);cx.fillStyle=p.c+'0a';cx.fill();
     return true;
   });
+
+  // HUD overlay (on top of everything)
+  drawHUD();
 
   fr++;requestAnimationFrame(loop);
 }
