@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRAPHISTA — Interactive Memory Graph Visualizer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&display=swap');
+:root {
+  --bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;
+  --border:#1e1e1e;--border2:#2a2a2a;--border3:#333;
+  --tx:#d0d0d0;--tx2:#888;--tx3:#555;--tx4:#333;
+  --white:#eee;--green:#00ff88;--gdim:#00ff8822;
+  --red:#ff4444;--blue:#4488ff;--yellow:#ffcc00;--purple:#aa66ff;--cyan:#00dddd;--orange:#ff8844;--pink:#ff66aa;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+::selection{background:#00ff8833;color:#fff}
+body{font-family:var(--mono);background:var(--bg);color:var(--tx);overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* LOADING */
+.loader{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s ease,visibility .8s}
+.loader.done{opacity:0;visibility:hidden;pointer-events:none}
+.loader-grid{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 59px,#0d0d0d 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,#0d0d0d 60px);opacity:.3}
+.loader-inner{position:relative;z-index:1;text-align:center}
+.loader-logo{font:800 32px var(--mono);color:var(--green);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;opacity:0;animation:lfu .5s .2s ease forwards}
+.loader-sub{font:400 11px var(--mono);color:var(--tx3);letter-spacing:.06em;margin-bottom:20px;opacity:0;animation:lfu .4s .5s ease forwards}
+.loader-spinner{width:40px;height:40px;border:2px solid var(--border2);border-top-color:var(--green);border-radius:50%;margin:0 auto;animation:spin 1s linear infinite,lfu .3s .6s ease forwards;opacity:0}
+@keyframes lfu{to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MAIN LAYOUT */
+.app{display:grid;grid-template-columns:320px 1fr;grid-template-rows:42px 1fr 32px;height:100vh;opacity:0;transition:opacity .5s ease}
+.app.ready{opacity:1}
+
+/* TOPBAR */
+.topbar{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--border);background:var(--bg);z-index:20}
+.tl{display:flex;align-items:center;gap:10px}
+.tt{font:700 11px var(--mono);color:var(--green);letter-spacing:.1em;text-transform:uppercase}
+.tc{font:400 9px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.04em}
+.tr{display:flex;align-items:center;gap:8px}
+.tb{display:flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--border2);background:var(--bg);font:600 9px var(--mono);color:var(--tx2);cursor:pointer;transition:all .12s;text-transform:uppercase;letter-spacing:.04em;text-decoration:none;white-space:nowrap}
+.tb:hover{border-color:var(--green);color:var(--white);background:var(--bg3)}
+.tb.p{border-color:var(--green);color:var(--green)}
+.tb.p:hover{background:var(--green);color:var(--bg)}
+.tb svg{width:14px;height:14px;flex-shrink:0}
+
+/* LEFT PANEL */
+.left{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-header{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-header h2{font:600 8px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.1em}
+.panel-header .count{font:500 8px var(--mono);color:var(--green)}
+
+/* NODE INFO PANEL */
+.node-info{padding:14px;border-bottom:1px solid var(--border);display:none;animation:slideIn .3s ease}
+.node-info.active{display:block}
+@keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.ni-title{font:700 13px var(--mono);color:var(--green);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.ni-type{font:500 7px var(--mono);color:var(--bg);background:var(--green);padding:1px 5px;text-transform:uppercase;letter-spacing:.06em}
+.ni-desc{font:400 9px var(--mono);color:var(--tx2);line-height:1.6;margin:8px 0}
+.ni-section{margin-top:10px}
+.ni-section-title{font:600 7px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.ni-section-title::before{content:'';width:8px;height:1px;background:var(--green)}
+.ni-prop{display:flex;justify-content:space-between;padding:3px 0;font:400 8px var(--mono);border-bottom:1px solid var(--border)}
+.ni-prop .k{color:var(--tx3)}.ni-prop .v{color:var(--cyan);text-align:right;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.ni-edge{display:flex;align-items:center;gap:5px;padding:3px 0;font:400 8px var(--mono)}
+.ni-edge .arrow{color:var(--green);font-weight:700}
+.ni-edge .label{color:var(--yellow);font-style:italic}
+.ni-edge .target{color:var(--tx2);cursor:pointer;transition:color .1s}
+.ni-edge .target:hover{color:var(--green)}
+
+/* CONTROLS */
+.controls{padding:14px;border-bottom:1px solid var(--border)}
+.ctrl-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ctrl-label{font:500 8px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.06em}
+.ctrl-val{font:500 8px var(--mono);color:var(--green)}
+.ctrl-slider{width:100%;-webkit-appearance:none;height:2px;background:var(--border2);outline:none;margin:4px 0}
+.ctrl-slider::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;background:var(--green);border-radius:50%;cursor:pointer}
+.ctrl-btns{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.ctrl-btn{padding:4px 10px;border:1px solid var(--border2);background:0;font:500 7px var(--mono);color:var(--tx3);cursor:pointer;text-transform:uppercase;letter-spacing:.04em;transition:all .1s}
+.ctrl-btn:hover{border-color:var(--green);color:var(--green)}
+.ctrl-btn.on{border-color:var(--green);color:var(--green);background:var(--gdim)}
+
+/* LIVE FEED */
+.feed{flex:1;overflow-y:auto;padding:0}
+.feed-header{padding:10px 14px 8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;position:sticky;top:0;background:var(--bg2);z-index:5}
+.feed-header h3{font:600 8px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.1em}
+.feed-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.5s ease infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.feed-item{padding:8px 14px;border-bottom:1px solid var(--border);font:400 8px var(--mono);line-height:1.6;animation:feedIn .3s ease}
+@keyframes feedIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.feed-item .ts{color:var(--tx4);margin-right:6px}
+.feed-item .act{color:var(--green)}
+.feed-item .ent{color:var(--cyan)}
+.feed-item .rel{color:var(--yellow)}
+.feed-item .val{color:var(--purple)}
+
+/* CANVAS */
+.canvas-wrap{position:relative;overflow:hidden;background:var(--bg)}
+#graphCanvas{width:100%;height:100%;display:block}
+
+/* HOVER TOOLTIP */
+.tooltip{position:absolute;background:var(--bg3);border:1px solid var(--green);padding:6px 10px;font:500 9px var(--mono);color:var(--green);pointer-events:none;opacity:0;transition:opacity .15s;z-index:30;white-space:nowrap;max-width:250px}
+.tooltip.show{opacity:1}
+.tooltip .tt-type{font:500 6px var(--mono);color:var(--bg);background:var(--green);padding:1px 4px;text-transform:uppercase;margin-left:6px}
+
+/* STATUSBAR */
+.statusbar{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-top:1px solid var(--border);background:var(--bg);font:400 8px var(--mono);color:var(--tx4)}
+.statusbar .left-s{display:flex;align-items:center;gap:12px}
+.statusbar .right-s{display:flex;align-items:center;gap:12px}
+.st-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 1.5s ease infinite}
+.st-label{color:var(--tx3)}
+.st-val{color:var(--green)}
+
+/* SEARCH */
+.search-wrap{padding:10px 14px;border-bottom:1px solid var(--border)}
+.search-box{display:flex;align-items:center;gap:5px;border:1px solid var(--border2);padding:5px 8px;transition:border-color .12s}
+.search-box:focus-within{border-color:var(--green)}
+.search-box svg{width:12px;height:12px;color:var(--tx4);flex-shrink:0}
+.search-box input{border:none;outline:none;background:0;font:400 9px var(--mono);color:var(--tx);width:100%}
+.search-box input::placeholder{color:var(--tx4)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--border3)}
+::-webkit-scrollbar-thumb:hover{background:var(--tx4)}
+
+/* DEMO BADGE */
+.demo-badge{position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(10,10,10,.85);border:1px solid var(--green);z-index:25;backdrop-filter:blur(8px)}
+.demo-badge .db-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1s ease infinite}
+.demo-badge.live .db-dot{background:var(--green)}
+.demo-badge span{font:600 8px var(--mono);color:var(--green);text-transform:uppercase;letter-spacing:.08em}
+
+/* GRAPH STATS OVERLAY */
+.graph-stats{position:absolute;bottom:12px;left:12px;display:flex;gap:12px;z-index:25}
+.gs-item{background:rgba(10,10,10,.85);border:1px solid var(--border2);padding:4px 10px;backdrop-filter:blur(8px)}
+.gs-item .gs-val{font:700 14px var(--mono);color:var(--green)}
+.gs-item .gs-label{font:400 7px var(--mono);color:var(--tx4);text-transform:uppercase;letter-spacing:.06em}
+
+/* HELP */
+.help-overlay{position:absolute;bottom:12px;right:12px;z-index:25}
+.help-btn{width:28px;height:28px;border:1px solid var(--border2);background:rgba(10,10,10,.85);color:var(--tx3);font:600 11px var(--mono);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .1s;backdrop-filter:blur(8px)}
+.help-btn:hover{border-color:var(--green);color:var(--green)}
+.help-popup{position:absolute;bottom:36px;right:0;width:220px;background:var(--bg3);border:1px solid var(--border2);padding:10px;display:none}
+.help-popup.show{display:block;animation:slideIn .2s ease}
+.help-line{font:400 8px var(--mono);color:var(--tx3);line-height:1.8}
+.help-line .hk{color:var(--green);display:inline-block;min-width:60px}
+</style>
+</head>
+<body>
+
+<div class="loader" id="loader">
+  <div class="loader-grid"></div>
+  <div class="loader-inner">
+    <div class="loader-logo">GRAPHISTA</div>
+    <div class="loader-sub">Initializing Memory Graph Visualizer...</div>
+    <div class="loader-spinner"></div>
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="tl">
+      <span class="tt">graphista</span>
+      <span style="color:var(--tx4)">//</span>
+      <span class="tc">memory_graph_visualizer</span>
+    </div>
+    <div class="tr">
+      <a class="tb" href="graph_final.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>Dashboard</a>
+      <button class="tb" id="resetBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 105.16-8.36L1 10"/></svg>Reset</button>
+      <button class="tb p" id="demoBtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Live Demo</button>
+    </div>
+  </header>
+
+  <aside class="left">
+    <div class="search-wrap">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search nodes...">
+      </div>
+    </div>
+
+    <div class="node-info" id="nodeInfo">
+      <div class="ni-title"><span id="niName"></span><span class="ni-type" id="niType"></span></div>
+      <div class="ni-desc" id="niDesc"></div>
+      <div class="ni-section">
+        <div class="ni-section-title">Properties</div>
+        <div id="niProps"></div>
+      </div>
+      <div class="ni-section">
+        <div class="ni-section-title">Connections</div>
+        <div id="niEdges"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="panel-header" style="padding:0 0 8px;border:0">
+        <h2>Controls</h2>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Force Strength</span>
+        <span class="ctrl-val" id="forceVal">0.5</span>
+      </div>
+      <input type="range" class="ctrl-slider" id="forceSlider" min="0" max="100" value="50">
+      <div class="ctrl-row" style="margin-top:8px">
+        <span class="ctrl-label">Node Size</span>
+        <span class="ctrl-val" id="sizeVal">1.0</span>
+      </div>
+      <input type="range" class="ctrl-slider" id="sizeSlider" min="20" max="200" value="100">
+      <div class="ctrl-btns">
+        <button class="ctrl-btn on" data-filter="all">All</button>
+        <button class="ctrl-btn" data-filter="agent">Agents</button>
+        <button class="ctrl-btn" data-filter="memory">Memory</button>
+        <button class="ctrl-btn" data-filter="entity">Entities</button>
+        <button class="ctrl-btn" data-filter="context">Context</button>
+        <button class="ctrl-btn" data-filter="skill">Skills</button>
+      </div>
+    </div>
+
+    <div class="feed-header">
+      <div class="feed-dot"></div>
+      <h3>Live Ingestion Feed</h3>
+    </div>
+    <div class="feed" id="feed"></div>
+  </aside>
+
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="graphCanvas"></canvas>
+    <div class="tooltip" id="tooltip"></div>
+
+    <div class="demo-badge" id="demoBadge">
+      <div class="db-dot"></div>
+      <span>Demo Paused</span>
+    </div>
+
+    <div class="graph-stats">
+      <div class="gs-item"><div class="gs-val" id="gsNodes">0</div><div class="gs-label">Nodes</div></div>
+      <div class="gs-item"><div class="gs-val" id="gsEdges">0</div><div class="gs-label">Edges</div></div>
+      <div class="gs-item"><div class="gs-val" id="gsQueries">0</div><div class="gs-label">Queries</div></div>
+    </div>
+
+    <div class="help-overlay">
+      <button class="help-btn" id="helpBtn">?</button>
+      <div class="help-popup" id="helpPopup">
+        <div class="help-line"><span class="hk">Drag</span> Rotate view</div>
+        <div class="help-line"><span class="hk">Scroll</span> Zoom in/out</div>
+        <div class="help-line"><span class="hk">Click</span> Select node</div>
+        <div class="help-line"><span class="hk">R-Click</span> Reset camera</div>
+        <div class="help-line"><span class="hk">Space</span> Toggle demo</div>
+        <div class="help-line"><span class="hk">F</span> Focus selected</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div class="left-s">
+      <div style="display:flex;align-items:center;gap:4px"><div class="st-dot"></div><span class="st-label">Graphista v2.1</span></div>
+      <span><span class="st-label">Renderer:</span> <span class="st-val">WebGL</span></span>
+      <span><span class="st-label">FPS:</span> <span class="st-val" id="fpsCounter">60</span></span>
+    </div>
+    <div class="right-s">
+      <span><span class="st-label">Memory:</span> <span class="st-val" id="memUsage">12.4MB</span></span>
+      <span><span class="st-label">Graph Depth:</span> <span class="st-val">7</span></span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ===== DATA =====
+const NODE_TYPES = {
+  agent:  { color: 0x00ff88, label: 'Agent',   size: 1.4 },
+  memory: { color: 0x4488ff, label: 'Memory',  size: 1.0 },
+  entity: { color: 0xffcc00, label: 'Entity',  size: 1.1 },
+  context:{ color: 0xaa66ff, label: 'Context', size: 0.9 },
+  skill:  { color: 0x00dddd, label: 'Skill',   size: 1.0 },
+  system: { color: 0xff4444, label: 'System',  size: 0.8 }
+};
+
+const INITIAL_NODES = [
+  { id:'pippin', label:'Pippin', type:'agent', desc:'Primary AI agent powered by Graphista memory system. Autonomous, persistent, evolving.', props:{version:'3.2.1',uptime:'847h',memories:'12,847',model:'Claude Opus'} },
+  { id:'graphista', label:'Graphista', type:'system', desc:'Graph-based memory engine. Stores entities as nodes, relationships as edges.', props:{nodes:'1,247',edges:'3,891',depth:'7',cache_hit:'94.2%'} },
+  { id:'user_eugene', label:'Eugene', type:'entity', desc:'Primary user. Web developer, memecoin creator, Solana ecosystem builder.', props:{interactions:'2,341',trust_score:'0.97',context_depth:'6',first_seen:'2024-08-12'} },
+  { id:'solana', label:'Solana', type:'entity', desc:'Layer 1 blockchain. Primary ecosystem for token deployments and DeFi operations.', props:{chain_id:'mainnet-beta',rpc_status:'active',tx_tracked:'847'} },
+  { id:'mem_conv_recent', label:'Recent Conversations', type:'memory', desc:'Rolling memory of last 50 conversations with context extraction and entity linking.', props:{entries:'50',avg_entities:'12.3',compression:'0.82'} },
+  { id:'mem_long_term', label:'Long-term Memory', type:'memory', desc:'Persistent memory store. Compressed and indexed for efficient retrieval.', props:{entries:'12,847',oldest:'2024-08-12',index_type:'graph+vector'} },
+  { id:'ctx_web_dev', label:'Web Development', type:'context', desc:'Context cluster for web development activities, frameworks, and deployment patterns.', props:{frameworks:'React, HTML, CSS',tools:'Netlify, Porkbun',frequency:'daily'} },
+  { id:'ctx_crypto', label:'Crypto/DeFi', type:'context', desc:'Context cluster for cryptocurrency, token launches, and DeFi protocol interactions.', props:{chains:'Solana',protocols:'pump.fun, Jupiter',tokens_tracked:'34'} },
+  { id:'skill_code', label:'Code Generation', type:'skill', desc:'Ability to generate, review, and debug code across multiple languages and frameworks.', props:{languages:'JS, Python, Rust',accuracy:'96.7%',avg_time:'2.3s'} },
+  { id:'skill_memory', label:'Memory Retrieval', type:'skill', desc:'Graph traversal and context retrieval from the Graphista memory store.', props:{avg_latency:'12ms',cache_hit:'94.2%',max_depth:'7'} },
+  { id:'skill_analysis', label:'Analysis', type:'skill', desc:'Pattern recognition, trend analysis, and data interpretation capabilities.', props:{domains:'crypto, code, social',confidence:'0.91'} },
+  { id:'mem_preferences', label:'User Preferences', type:'memory', desc:'Stored preferences: dark themes, cyberpunk aesthetics, rapid iteration, terminal UI.', props:{theme:'dark/neon',style:'cyberpunk',pace:'fast',detail:'high'} },
+  { id:'ctx_anime', label:'Anime/Culture', type:'context', desc:'Context for anime references, Japanese pop culture integration in projects.', props:{frequency:'weekly',influence:'design'} },
+  { id:'entity_netlify', label:'Netlify', type:'entity', desc:'Primary deployment platform for web projects. CI/CD integration.', props:{sites:'47',deploys_month:'120+'} },
+  { id:'entity_porkbun', label:'Porkbun', type:'entity', desc:'DNS management and domain registration provider.', props:{domains:'23',dns_records:'156'} },
+  { id:'mem_projects', label:'Project History', type:'memory', desc:'Complete history of built projects including memecoins, dashboards, and tools.', props:{total:'200+',active:'12',archived:'188'} },
+  { id:'skill_design', label:'UI/UX Design', type:'skill', desc:'Interface design with focus on dark themes, neon accents, and terminal aesthetics.', props:{style:'cyberpunk',animations:'yes',frameworks:'CSS, Three.js'} },
+  { id:'ctx_conspiracy', label:'Conspiracy/Lore', type:'context', desc:'Conspiracy theories and alternative narratives used in creative project themes.', props:{frequency:'occasional',use:'creative themes'} },
+  { id:'entity_pumpfun', label:'pump.fun', type:'entity', desc:'Token launch platform on Solana. Used for memecoin deployments.', props:{launches:'15+',chain:'Solana'} },
+  { id:'mem_relationships', label:'Relationship Map', type:'memory', desc:'Graph of interpersonal and entity relationships extracted from conversations.', props:{entities:'347',relationships:'1,203',clusters:'28'} },
+];
+
+const INITIAL_EDGES = [
+  { from:'pippin', to:'graphista', label:'powered_by', strength:1.0 },
+  { from:'pippin', to:'user_eugene', label:'serves', strength:0.9 },
+  { from:'pippin', to:'skill_code', label:'has_skill', strength:0.8 },
+  { from:'pippin', to:'skill_memory', label:'has_skill', strength:0.9 },
+  { from:'pippin', to:'skill_analysis', label:'has_skill', strength:0.7 },
+  { from:'pippin', to:'skill_design', label:'has_skill', strength:0.7 },
+  { from:'graphista', to:'mem_conv_recent', label:'stores', strength:0.8 },
+  { from:'graphista', to:'mem_long_term', label:'stores', strength:0.9 },
+  { from:'graphista', to:'mem_preferences', label:'stores', strength:0.7 },
+  { from:'graphista', to:'mem_projects', label:'stores', strength:0.8 },
+  { from:'graphista', to:'mem_relationships', label:'stores', strength:0.8 },
+  { from:'user_eugene', to:'ctx_web_dev', label:'active_in', strength:0.9 },
+  { from:'user_eugene', to:'ctx_crypto', label:'active_in', strength:0.9 },
+  { from:'user_eugene', to:'ctx_anime', label:'interested_in', strength:0.6 },
+  { from:'user_eugene', to:'ctx_conspiracy', label:'interested_in', strength:0.5 },
+  { from:'user_eugene', to:'solana', label:'builds_on', strength:0.8 },
+  { from:'ctx_crypto', to:'solana', label:'primary_chain', strength:0.9 },
+  { from:'ctx_crypto', to:'entity_pumpfun', label:'uses', strength:0.7 },
+  { from:'ctx_web_dev', to:'entity_netlify', label:'deploys_to', strength:0.8 },
+  { from:'ctx_web_dev', to:'entity_porkbun', label:'dns_via', strength:0.7 },
+  { from:'skill_memory', to:'graphista', label:'queries', strength:0.9 },
+  { from:'mem_conv_recent', to:'mem_long_term', label:'compresses_to', strength:0.7 },
+  { from:'mem_preferences', to:'skill_design', label:'informs', strength:0.6 },
+  { from:'entity_pumpfun', to:'solana', label:'runs_on', strength:0.8 },
+  { from:'mem_projects', to:'ctx_web_dev', label:'categorized', strength:0.6 },
+  { from:'mem_projects', to:'ctx_crypto', label:'categorized', strength:0.6 },
+  { from:'mem_relationships', to:'user_eugene', label:'tracks', strength:0.7 },
+];
+
+// Demo ingestion events
+const DEMO_EVENTS = [
+  { action:'INGEST', entity:'New conversation detected', detail:'Extracting entities from user message...', type:'act' },
+  { action:'EXTRACT', entity:'"Graphista dashboard"', detail:'Entity type: PROJECT', type:'ent' },
+  { action:'LINK', entity:'"dashboard" → "Web Development"', detail:'Relationship: belongs_to (0.87)', type:'rel' },
+  { action:'EXTRACT', entity:'"interactive visualizer"', detail:'Entity type: FEATURE', type:'ent' },
+  { action:'CACHE', entity:'Query path optimized', detail:'Cache hit ratio: 94.2% → 94.5%', type:'val' },
+  { action:'INGEST', entity:'Memory compression triggered', detail:'50 recent → long-term store', type:'act' },
+  { action:'EXTRACT', entity:'"Three.js"', detail:'Entity type: TECHNOLOGY', type:'ent' },
+  { action:'LINK', entity:'"Three.js" → "UI/UX Design"', detail:'Relationship: used_by (0.76)', type:'rel' },
+  { action:'QUERY', entity:'Context retrieval: crypto', detail:'Traversed 12 nodes, 23 edges in 8ms', type:'val' },
+  { action:'EXTRACT', entity:'"pump.fun launch"', detail:'Entity type: EVENT', type:'ent' },
+  { action:'LINK', entity:'"pump.fun" → "Solana"', detail:'Relationship: runs_on (0.92)', type:'rel' },
+  { action:'INGEST', entity:'Sentiment analysis complete', detail:'Positive: 0.82, Neutral: 0.15, Negative: 0.03', type:'act' },
+  { action:'EXTRACT', entity:'"token migration"', detail:'Entity type: CONCEPT', type:'ent' },
+  { action:'CACHE', entity:'Hot path detected', detail:'"Eugene → Solana → pump.fun" cached', type:'val' },
+  { action:'LINK', entity:'"Pippin" → "Graphista"', detail:'Relationship strength: 1.0 (core)', type:'rel' },
+  { action:'QUERY', entity:'Memory recall: user prefs', detail:'Dark theme, cyberpunk, JetBrains Mono', type:'val' },
+  { action:'EXTRACT', entity:'"BottomTek"', detail:'Entity type: PROJECT', type:'ent' },
+  { action:'LINK', entity:'"BottomTek" → "Crypto/DeFi"', detail:'Relationship: themed_around (0.81)', type:'rel' },
+  { action:'INGEST', entity:'Graph rebalancing...', detail:'Node centrality recalculated', type:'act' },
+  { action:'EXTRACT', entity:'"Giraffe Chain"', detail:'Entity type: PROJECT', type:'ent' },
+];
+
+const DEMO_NEW_NODES = [
+  { id:'entity_threejs', label:'Three.js', type:'entity', desc:'3D graphics library for WebGL rendering.', props:{use:'visualizer',version:'r128'} },
+  { id:'entity_bottomtek', label:'BottomTek', type:'entity', desc:'Satirical bear market terminal memecoin project.', props:{status:'deployed',chain:'Solana'} },
+  { id:'entity_giraffe', label:'Giraffe Chain', type:'entity', desc:'Blockchain platform with embedded graph database.', props:{status:'development',type:'L1'} },
+  { id:'ctx_ai_agents', label:'AI Agents', type:'context', desc:'Autonomous AI agent development and deployment context.', props:{frameworks:'LangChain, Custom',focus:'memory'} },
+  { id:'mem_token_launches', label:'Token Launches', type:'memory', desc:'History of token deployments, migrations, and market data.', props:{launches:'15+',success_rate:'78%'} },
+];
+
+const DEMO_NEW_EDGES = [
+  { from:'entity_threejs', to:'skill_design', label:'used_by' },
+  { from:'entity_bottomtek', to:'ctx_crypto', label:'belongs_to' },
+  { from:'entity_giraffe', to:'solana', label:'inspired_by' },
+  { from:'ctx_ai_agents', to:'pippin', label:'category_of' },
+  { from:'mem_token_launches', to:'entity_pumpfun', label:'launched_on' },
+  { from:'entity_bottomtek', to:'user_eugene', label:'created_by' },
+  { from:'entity_giraffe', to:'user_eugene', label:'created_by' },
+  { from:'ctx_ai_agents', to:'graphista', label:'uses' },
+];
+
+// ===== THREE.JS SETUP =====
+let scene, camera, renderer, raycaster, mouse;
+let nodeMeshes = [], edgeLines = [], nodeData = [], edgeData = [];
+let selectedNode = null, hoveredNode = null;
+let isDragging = false, prevMouse = {x:0,y:0};
+let cameraAngle = {theta: Math.PI/4, phi: Math.PI/4, radius: 50};
+let targetAngle = {...cameraAngle};
+let demoRunning = false, demoInterval = null, demoEventIdx = 0, demoNodeIdx = 0, demoEdgeIdx = 0;
+let forceStrength = 0.5, nodeSizeMultiplier = 1.0;
+let activeFilter = 'all';
+let queryCount = 0;
+let frameCount = 0, lastFpsTime = Date.now();
+let glowPulse = 0;
+let nodePositions = {};
+
+function init() {
+  const wrap = document.getElementById('canvasWrap');
+  const canvas = document.getElementById('graphCanvas');
+
+  scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x0a0a0a, 0.008);
+
+  camera = new THREE.PerspectiveCamera(60, wrap.clientWidth / wrap.clientHeight, 0.1, 500);
+  updateCameraPosition();
+
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x0a0a0a);
+
+  raycaster = new THREE.Raycaster();
+  raycaster.params.Points = { threshold: 1.5 };
+  mouse = new THREE.Vector2();
+
+  // Ambient light
+  scene.add(new THREE.AmbientLight(0x222222));
+  
+  // Point lights
+  const pl1 = new THREE.PointLight(0x00ff88, 0.5, 100);
+  pl1.position.set(0, 20, 0);
+  scene.add(pl1);
+  
+  const pl2 = new THREE.PointLight(0x4488ff, 0.3, 80);
+  pl2.position.set(-30, -10, 20);
+  scene.add(pl2);
+
+  // Grid helper
+  const gridGeo = new THREE.BufferGeometry();
+  const gridPts = [];
+  const gridSize = 80, gridDiv = 40;
+  for (let i = -gridDiv; i <= gridDiv; i++) {
+    const p = (i / gridDiv) * gridSize;
+    gridPts.push(-gridSize, -15, p, gridSize, -15, p);
+    gridPts.push(p, -15, -gridSize, p, -15, gridSize);
+  }
+  gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(gridPts, 3));
+  const gridMat = new THREE.LineBasicMaterial({ color: 0x111111, transparent: true, opacity: 0.4 });
+  scene.add(new THREE.LineSegments(gridGeo, gridMat));
+
+  // Particle field
+  const particleCount = 500;
+  const particleGeo = new THREE.BufferGeometry();
+  const particlePos = new Float32Array(particleCount * 3);
+  for (let i = 0; i < particleCount * 3; i++) {
+    particlePos[i] = (Math.random() - 0.5) * 120;
+  }
+  particleGeo.setAttribute('position', new THREE.Float32BufferAttribute(particlePos, 3));
+  const particleMat = new THREE.PointsMaterial({ color: 0x00ff88, size: 0.15, transparent: true, opacity: 0.3 });
+  scene.add(new THREE.Points(particleGeo, particleMat));
+
+  // Build initial graph
+  buildGraph(INITIAL_NODES, INITIAL_EDGES);
+
+  // Events
+  canvas.addEventListener('mousedown', onMouseDown);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseup', onMouseUp);
+  canvas.addEventListener('wheel', onWheel);
+  canvas.addEventListener('click', onClick);
+  canvas.addEventListener('contextmenu', e => { e.preventDefault(); targetAngle = {theta:Math.PI/4,phi:Math.PI/4,radius:50}; });
+  window.addEventListener('resize', onResize);
+  window.addEventListener('keydown', onKeyDown);
+
+  updateStats();
+  animate();
+}
+
+function buildGraph(nodes, edges) {
+  // Position nodes in 3D space using a force-directed-like layout
+  const existing = nodeData.length;
+  nodes.forEach((n, i) => {
+    if (nodePositions[n.id]) return; // skip if already exists
+    const angle1 = ((existing + i) / (existing + nodes.length)) * Math.PI * 2;
+    const angle2 = Math.random() * Math.PI;
+    const r = 12 + Math.random() * 18;
+    const pos = new THREE.Vector3(
+      r * Math.sin(angle2) * Math.cos(angle1),
+      (Math.random() - 0.5) * 15,
+      r * Math.sin(angle2) * Math.sin(angle1)
+    );
+    nodePositions[n.id] = pos;
+
+    const typeInfo = NODE_TYPES[n.type] || NODE_TYPES.entity;
+    const size = typeInfo.size * 0.8;
+
+    // Sphere
+    const geo = new THREE.SphereGeometry(size, 16, 16);
+    const mat = new THREE.MeshPhongMaterial({
+      color: typeInfo.color,
+      emissive: typeInfo.color,
+      emissiveIntensity: 0.3,
+      transparent: true,
+      opacity: 0.9,
+      shininess: 100
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(pos);
+    mesh.userData = { ...n, baseSize: size };
+    scene.add(mesh);
+    nodeMeshes.push(mesh);
+    nodeData.push(n);
+
+    // Glow ring
+    const ringGeo = new THREE.RingGeometry(size * 1.3, size * 1.5, 32);
+    const ringMat = new THREE.MeshBasicMaterial({ color: typeInfo.color, transparent: true, opacity: 0.15, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.position.copy(pos);
+    ring.lookAt(camera.position);
+    ring.userData.isRing = true;
+    ring.userData.parentId = n.id;
+    scene.add(ring);
+  });
+
+  // Edges
+  edges.forEach(e => {
+    const fromPos = nodePositions[e.from];
+    const toPos = nodePositions[e.to];
+    if (!fromPos || !toPos) return;
+
+    const points = [fromPos, toPos];
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({
+      color: 0x00ff88,
+      transparent: true,
+      opacity: 0.12
+    });
+    const line = new THREE.Line(geo, mat);
+    line.userData = e;
+    scene.add(line);
+    edgeLines.push(line);
+    edgeData.push(e);
+  });
+}
+
+function updateCameraPosition() {
+  camera.position.x = cameraAngle.radius * Math.sin(cameraAngle.phi) * Math.cos(cameraAngle.theta);
+  camera.position.y = cameraAngle.radius * Math.cos(cameraAngle.phi);
+  camera.position.z = cameraAngle.radius * Math.sin(cameraAngle.phi) * Math.sin(cameraAngle.theta);
+  camera.lookAt(0, 0, 0);
+}
+
+function onMouseDown(e) {
+  isDragging = true;
+  prevMouse = { x: e.clientX, y: e.clientY };
+}
+
+function onMouseMove(e) {
+  const wrap = document.getElementById('canvasWrap');
+  const rect = wrap.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  if (isDragging) {
+    const dx = e.clientX - prevMouse.x;
+    const dy = e.clientY - prevMouse.y;
+    targetAngle.theta -= dx * 0.005;
+    targetAngle.phi = Math.max(0.1, Math.min(Math.PI - 0.1, targetAngle.phi + dy * 0.005));
+    prevMouse = { x: e.clientX, y: e.clientY };
+  }
+
+  // Hover detection
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(nodeMeshes);
+  const tooltip = document.getElementById('tooltip');
+
+  if (intersects.length > 0) {
+    const node = intersects[0].object.userData;
+    hoveredNode = intersects[0].object;
+    document.getElementById('graphCanvas').style.cursor = 'pointer';
+    const typeInfo = NODE_TYPES[node.type];
+    tooltip.innerHTML = `${node.label} <span class="tt-type">${typeInfo.label}</span>`;
+    tooltip.style.left = (e.clientX - document.getElementById('canvasWrap').getBoundingClientRect().left + 12) + 'px';
+    tooltip.style.top = (e.clientY - document.getElementById('canvasWrap').getBoundingClientRect().top - 10) + 'px';
+    tooltip.classList.add('show');
+  } else {
+    hoveredNode = null;
+    document.getElementById('graphCanvas').style.cursor = 'grab';
+    tooltip.classList.remove('show');
+  }
+}
+
+function onMouseUp() { isDragging = false; }
+
+function onWheel(e) {
+  e.preventDefault();
+  targetAngle.radius = Math.max(15, Math.min(100, targetAngle.radius + e.deltaY * 0.05));
+}
+
+function onClick(e) {
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(nodeMeshes);
+  if (intersects.length > 0) {
+    selectNode(intersects[0].object);
+  } else {
+    deselectNode();
+  }
+}
+
+function selectNode(mesh) {
+  // Reset previous
+  if (selectedNode) {
+    const prevType = NODE_TYPES[selectedNode.userData.type];
+    selectedNode.material.emissiveIntensity = 0.3;
+    selectedNode.scale.setScalar(1);
+  }
+
+  selectedNode = mesh;
+  mesh.material.emissiveIntensity = 0.8;
+  mesh.scale.setScalar(1.3);
+
+  const node = mesh.userData;
+  const panel = document.getElementById('nodeInfo');
+  panel.classList.add('active');
+  document.getElementById('niName').textContent = node.label;
+  document.getElementById('niType').textContent = NODE_TYPES[node.type].label;
+  document.getElementById('niDesc').textContent = node.desc;
+
+  // Props
+  const propsEl = document.getElementById('niProps');
+  propsEl.innerHTML = '';
+  if (node.props) {
+    Object.entries(node.props).forEach(([k, v]) => {
+      propsEl.innerHTML += `<div class="ni-prop"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+    });
+  }
+
+  // Edges
+  const edgesEl = document.getElementById('niEdges');
+  edgesEl.innerHTML = '';
+  edgeData.forEach(e => {
+    if (e.from === node.id) {
+      const targetNode = nodeData.find(n => n.id === e.to);
+      if (targetNode) {
+        edgesEl.innerHTML += `<div class="ni-edge"><span class="arrow">→</span><span class="label">${e.label}</span><span class="target" onclick="focusNode('${e.to}')">${targetNode.label}</span></div>`;
+      }
+    }
+    if (e.to === node.id) {
+      const sourceNode = nodeData.find(n => n.id === e.from);
+      if (sourceNode) {
+        edgesEl.innerHTML += `<div class="ni-edge"><span class="arrow">←</span><span class="label">${e.label}</span><span class="target" onclick="focusNode('${e.from}')">${sourceNode.label}</span></div>`;
+      }
+    }
+  });
+
+  // Highlight connected edges
+  edgeLines.forEach(line => {
+    const e = line.userData;
+    if (e.from === node.id || e.to === node.id) {
+      line.material.opacity = 0.6;
+      line.material.color.setHex(0x00ff88);
+    } else {
+      line.material.opacity = 0.05;
+    }
+  });
+
+  queryCount++;
+  updateStats();
+}
+
+function deselectNode() {
+  if (selectedNode) {
+    selectedNode.material.emissiveIntensity = 0.3;
+    selectedNode.scale.setScalar(1);
+    selectedNode = null;
+  }
+  document.getElementById('nodeInfo').classList.remove('active');
+  edgeLines.forEach(line => {
+    line.material.opacity = 0.12;
+  });
+}
+
+function focusNode(id) {
+  const mesh = nodeMeshes.find(m => m.userData.id === id);
+  if (mesh) selectNode(mesh);
+}
+
+function onResize() {
+  const wrap = document.getElementById('canvasWrap');
+  camera.aspect = wrap.clientWidth / wrap.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+}
+
+function onKeyDown(e) {
+  if (e.code === 'Space') { e.preventDefault(); toggleDemo(); }
+  if (e.code === 'KeyF' && selectedNode) {
+    const pos = selectedNode.position;
+    // Move camera to look at selected node
+    targetAngle.radius = 25;
+  }
+}
+
+// ===== DEMO MODE =====
+function toggleDemo() {
+  demoRunning = !demoRunning;
+  const badge = document.getElementById('demoBadge');
+  const btn = document.getElementById('demoBtn');
+
+  if (demoRunning) {
+    badge.classList.add('live');
+    badge.querySelector('span').textContent = 'Live Ingesting';
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>Pause';
+    runDemoStep();
+    demoInterval = setInterval(runDemoStep, 2000);
+  } else {
+    badge.classList.remove('live');
+    badge.querySelector('span').textContent = 'Demo Paused';
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Live Demo';
+    clearInterval(demoInterval);
+  }
+}
+
+function runDemoStep() {
+  // Add feed event
+  const evt = DEMO_EVENTS[demoEventIdx % DEMO_EVENTS.length];
+  addFeedItem(evt);
+  demoEventIdx++;
+
+  // Every 3rd event, add a new node
+  if (demoEventIdx % 3 === 0 && demoNodeIdx < DEMO_NEW_NODES.length) {
+    const newNode = DEMO_NEW_NODES[demoNodeIdx];
+    buildGraph([newNode], []);
+    demoNodeIdx++;
+    updateStats();
+  }
+
+  // Every 4th event, add a new edge
+  if (demoEventIdx % 4 === 0 && demoEdgeIdx < DEMO_NEW_EDGES.length) {
+    const newEdge = DEMO_NEW_EDGES[demoEdgeIdx];
+    buildGraph([], [newEdge]);
+    demoEdgeIdx++;
+    updateStats();
+  }
+
+  queryCount++;
+  updateStats();
+}
+
+function addFeedItem(evt) {
+  const feed = document.getElementById('feed');
+  const now = new Date();
+  const ts = now.toTimeString().slice(0, 8);
+  const item = document.createElement('div');
+  item.className = 'feed-item';
+  item.innerHTML = `<span class="ts">${ts}</span><span class="${evt.type}">[${evt.action}]</span> ${evt.entity} <span style="color:var(--tx4)">— ${evt.detail}</span>`;
+  feed.insertBefore(item, feed.firstChild);
+
+  // Limit feed items
+  while (feed.children.length > 50) feed.removeChild(feed.lastChild);
+}
+
+function updateStats() {
+  document.getElementById('gsNodes').textContent = nodeData.length;
+  document.getElementById('gsEdges').textContent = edgeData.length;
+  document.getElementById('gsQueries').textContent = queryCount;
+}
+
+// ===== ANIMATION =====
+function animate() {
+  requestAnimationFrame(animate);
+  glowPulse += 0.02;
+
+  // Smooth camera
+  cameraAngle.theta += (targetAngle.theta - cameraAngle.theta) * 0.08;
+  cameraAngle.phi += (targetAngle.phi - cameraAngle.phi) * 0.08;
+  cameraAngle.radius += (targetAngle.radius - cameraAngle.radius) * 0.08;
+  updateCameraPosition();
+
+  // Auto-rotate when not dragging and no selection
+  if (!isDragging && !selectedNode) {
+    targetAngle.theta += 0.001;
+  }
+
+  // Node animations
+  nodeMeshes.forEach((mesh, i) => {
+    const node = mesh.userData;
+    const typeInfo = NODE_TYPES[node.type];
+    const isFiltered = activeFilter !== 'all' && node.type !== activeFilter;
+
+    // Filter visibility
+    mesh.material.opacity = isFiltered ? 0.1 : 0.9;
+
+    // Floating motion
+    mesh.position.y = nodePositions[node.id].y + Math.sin(glowPulse + i * 0.5) * 0.3;
+
+    // Glow pulse
+    if (mesh === hoveredNode) {
+      mesh.material.emissiveIntensity = 0.6 + Math.sin(glowPulse * 3) * 0.2;
+    } else if (mesh !== selectedNode) {
+      mesh.material.emissiveIntensity = 0.2 + Math.sin(glowPulse + i) * 0.1;
+    }
+
+    // Size multiplier
+    if (mesh !== selectedNode) {
+      mesh.scale.setScalar(nodeSizeMultiplier);
+    }
+  });
+
+  // Update rings to face camera
+  scene.traverse(obj => {
+    if (obj.userData && obj.userData.isRing) {
+      obj.lookAt(camera.position);
+      const parentPos = nodePositions[obj.userData.parentId];
+      if (parentPos) {
+        obj.position.y = parentPos.y + Math.sin(glowPulse + parentPos.x) * 0.3;
+      }
+      obj.material.opacity = 0.1 + Math.sin(glowPulse * 2) * 0.05;
+    }
+  });
+
+  // Edge pulse
+  edgeLines.forEach((line, i) => {
+    if (selectedNode) return; // keep selection highlighting
+    const pulse = 0.08 + Math.sin(glowPulse * 1.5 + i * 0.3) * 0.04;
+    line.material.opacity = activeFilter !== 'all' ? 0.03 : pulse;
+  });
+
+  // FPS counter
+  frameCount++;
+  if (Date.now() - lastFpsTime >= 1000) {
+    document.getElementById('fpsCounter').textContent = frameCount;
+    frameCount = 0;
+    lastFpsTime = Date.now();
+  }
+
+  // Memory display
+  if (Math.random() < 0.01) {
+    document.getElementById('memUsage').textContent = (10 + Math.random() * 8).toFixed(1) + 'MB';
+  }
+
+  renderer.render(scene, camera);
+}
+
+// ===== UI =====
+document.getElementById('forceSlider').addEventListener('input', function() {
+  forceStrength = this.value / 100;
+  document.getElementById('forceVal').textContent = forceStrength.toFixed(2);
+});
+
+document.getElementById('sizeSlider').addEventListener('input', function() {
+  nodeSizeMultiplier = this.value / 100;
+  document.getElementById('sizeVal').textContent = nodeSizeMultiplier.toFixed(1);
+});
+
+document.querySelectorAll('.ctrl-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('on'));
+    this.classList.add('on');
+    activeFilter = this.dataset.filter;
+    deselectNode();
+  });
+});
+
+document.getElementById('demoBtn').addEventListener('click', toggleDemo);
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (demoRunning) toggleDemo();
+  deselectNode();
+  targetAngle = { theta: Math.PI/4, phi: Math.PI/4, radius: 50 };
+  activeFilter = 'all';
+  document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('on'));
+  document.querySelector('[data-filter="all"]').classList.add('on');
+});
+
+document.getElementById('helpBtn').addEventListener('click', () => {
+  document.getElementById('helpPopup').classList.toggle('show');
+});
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  if (!q) { deselectNode(); return; }
+  const match = nodeMeshes.find(m => m.userData.label.toLowerCase().includes(q));
+  if (match) selectNode(match);
+});
+
+// ===== BOOT =====
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    init();
+    document.getElementById('loader').classList.add('done');
+    document.getElementById('app').classList.add('ready');
+
+    // Auto-start some feed items
+    setTimeout(() => {
+      addFeedItem({ action:'BOOT', entity:'Graphista memory engine initialized', detail:'v2.1.0 — 20 nodes, 27 edges loaded', type:'act' });
+    }, 500);
+    setTimeout(() => {
+      addFeedItem({ action:'INDEX', entity:'Graph index built', detail:'Depth: 7, Clusters: 6', type:'val' });
+    }, 1200);
+    setTimeout(() => {
+      addFeedItem({ action:'READY', entity:'Visualizer online', detail:'WebGL renderer active, 60fps target', type:'act' });
+    }, 2000);
+  }, 1800);
+});
+</script>
+</body>
+</html>
