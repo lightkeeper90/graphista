@@ -185,6 +185,47 @@ body{font-family:var(--mono);background:var(--bg);color:var(--tx);-webkit-font-s
 
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border3)}
+
+/* AUTONOMOUS AGENTS */
+.agents-panel{border:1px solid var(--green);background:var(--bg2);margin-bottom:16px;overflow:hidden;position:relative}
+.agents-panel::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,255,136,.03) 0%,transparent 50%);pointer-events:none}
+.agents-header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(0,255,136,.05);border-bottom:1px solid var(--green)}
+.agents-header h2{font:600 8px var(--mono);color:var(--green);text-transform:uppercase;letter-spacing:.1em}
+.agents-cycle{font:500 7px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.04em}
+.agents-cycle span{color:var(--green)}
+.agent-pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:agentPulse 2s ease infinite;flex-shrink:0}
+@keyframes agentPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,255,136,.6)}50%{box-shadow:0 0 0 6px rgba(0,255,136,0)}}
+.agent-cards{padding:8px}
+.agent-card{border:1px solid var(--border2);padding:10px;margin-bottom:6px;transition:all .2s;position:relative;overflow:hidden}
+.agent-card:hover{border-color:var(--border3);background:rgba(0,255,136,.02)}
+.agent-card-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.agent-icon{width:28px;height:28px;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font:700 14px var(--mono);flex-shrink:0;background:var(--bg)}
+.agent-info{flex:1;min-width:0}
+.agent-name{font:600 9px var(--mono);color:var(--white)}
+.agent-role{font:400 7px var(--mono);color:var(--tx3);margin-top:1px}
+.agent-status{font:600 6px var(--mono);padding:2px 6px;text-transform:uppercase;letter-spacing:.06em;flex-shrink:0}
+.agent-status.active{color:var(--bg);background:var(--green);animation:statusBlink 3s ease infinite}
+.agent-status.scanning{color:var(--bg);background:var(--yellow);animation:statusBlink 1s ease infinite}
+.agent-status.idle{color:var(--tx3);border:1px solid var(--border2)}
+@keyframes statusBlink{0%,90%,100%{opacity:1}95%{opacity:.5}}
+.agent-bar{height:3px;background:var(--border);overflow:hidden;margin-bottom:6px}
+.agent-bar-fill{height:100%;background:var(--green);transition:width .3s ease;box-shadow:0 0 6px rgba(0,255,136,.4)}
+.agent-stats-row{display:flex;justify-content:space-between;font:400 7px var(--mono);color:var(--tx4)}
+.agent-stats-row .green{color:var(--green)}
+.agent-log-header{display:flex;align-items:center;gap:5px;padding:6px 12px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg3)}
+.agent-log-header span{font:500 7px var(--mono);color:var(--tx3);text-transform:uppercase;letter-spacing:.08em}
+.agent-log{max-height:160px;overflow-y:auto;padding:6px 10px}
+.agent-log-item{font:400 7px var(--mono);line-height:1.8;animation:logIn .3s ease;display:flex;gap:6px}
+@keyframes logIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.agent-log-item .log-ts{color:var(--tx4);flex-shrink:0}
+.agent-log-item .log-agent{font-weight:600;flex-shrink:0}
+.agent-log-item .log-agent.cr{color:var(--green)}
+.agent-log-item .log-agent.hc{color:var(--cyan)}
+.agent-log-item .log-agent.pm{color:var(--purple)}
+.agent-log-item .log-msg{color:var(--tx2)}
+.agent-log-item .log-ok{color:var(--green)}
+.agent-log-item .log-warn{color:var(--yellow)}
+.agent-log-item .log-file{color:var(--cyan)}
 </style>
 </head>
 <body>
@@ -350,6 +391,73 @@ body{font-family:var(--mono);background:var(--bg);color:var(--tx);-webkit-font-s
     <!-- RIGHT SIDEBAR -->
     <div class="side-col">
 
+      <!-- AUTONOMOUS AGENTS -->
+      <div class="agents-panel">
+        <div class="agents-header">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="agent-pulse"></div>
+            <h2>Autonomous Review Agents</h2>
+          </div>
+          <span class="agents-cycle" id="agentCycle">Next sweep: <span id="agentTimer">60</span>s</span>
+        </div>
+
+        <div class="agent-cards" id="agentCards">
+          <div class="agent-card">
+            <div class="agent-card-top">
+              <div class="agent-icon" style="color:var(--green)">λ</div>
+              <div class="agent-info">
+                <div class="agent-name">CodeReview-Agent</div>
+                <div class="agent-role">Scans PRs for bugs, style, test coverage</div>
+              </div>
+              <div class="agent-status active">ACTIVE</div>
+            </div>
+            <div class="agent-bar"><div class="agent-bar-fill" id="agentBar1" style="width:0%"></div></div>
+            <div class="agent-stats-row">
+              <span>Reviewed: <span class="green" id="agentReviewed">0</span></span>
+              <span>Issues found: <span style="color:var(--yellow)" id="agentIssues">0</span></span>
+            </div>
+          </div>
+
+          <div class="agent-card">
+            <div class="agent-card-top">
+              <div class="agent-icon" style="color:var(--cyan)">Ω</div>
+              <div class="agent-info">
+                <div class="agent-name">HealthCheck-Agent</div>
+                <div class="agent-role">Monitors codebase for regressions</div>
+              </div>
+              <div class="agent-status active">ACTIVE</div>
+            </div>
+            <div class="agent-bar"><div class="agent-bar-fill" id="agentBar2" style="width:0%"></div></div>
+            <div class="agent-stats-row">
+              <span>Files scanned: <span class="green" id="agentFiles">0</span></span>
+              <span>Health: <span class="green" id="agentHealth">100%</span></span>
+            </div>
+          </div>
+
+          <div class="agent-card">
+            <div class="agent-card-top">
+              <div class="agent-icon" style="color:var(--purple)">Ψ</div>
+              <div class="agent-info">
+                <div class="agent-name">PathMapper-Agent</div>
+                <div class="agent-role">Auto-generates implementation guides for issues</div>
+              </div>
+              <div class="agent-status active">ACTIVE</div>
+            </div>
+            <div class="agent-bar"><div class="agent-bar-fill" id="agentBar3" style="width:0%"></div></div>
+            <div class="agent-stats-row">
+              <span>Issues mapped: <span class="green" id="agentMapped">0</span></span>
+              <span>Paths generated: <span style="color:var(--purple)" id="agentPaths">0</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="agent-log-header">
+          <div class="agent-pulse" style="width:4px;height:4px"></div>
+          <span>Agent Activity Log</span>
+        </div>
+        <div class="agent-log" id="agentLog"></div>
+      </div>
+
       <!-- LIVE TERMINAL -->
       <div class="terminal">
         <div class="term-bar">
@@ -420,6 +528,154 @@ const TERM_LINES = [
   { text:'<span class="prompt">$</span> <span class="cmd">graphista lint --strict</span>' },
   { text:'<span class="ok">✓ No issues found in 48 files</span>' },
 ];
+
+// ===== AUTONOMOUS AGENT SIMULATION =====
+const AGENT_LOG_MSGS = [
+  { agent:'cr', name:'CodeReview', msgs:[
+    'Scanning <span class="log-file">core/graph.py</span> for style violations...',
+    'Analyzing test coverage for <span class="log-file">core/cache.py</span>... <span class="log-ok">94.2%</span>',
+    'Checking cyclomatic complexity... <span class="log-ok">PASS</span> (avg: 4.2)',
+    'Reviewing import structure... <span class="log-ok">clean</span>',
+    'Scanning for security vulnerabilities... <span class="log-ok">0 found</span>',
+    'Validating type annotations in <span class="log-file">core/traversal.py</span>...',
+    'Checking for unused variables... <span class="log-warn">1 warning</span> in line 247',
+    'Running static analysis on <span class="log-file">core/ingestion.py</span>... <span class="log-ok">PASS</span>',
+    'Verifying docstring coverage... <span class="log-ok">87%</span>',
+    'Checking dependency versions... all up to date',
+  ]},
+  { agent:'hc', name:'HealthCheck', msgs:[
+    'Running regression suite... <span class="log-ok">247/247 passed</span>',
+    'Monitoring memory usage... <span class="log-ok">stable at 12.4MB</span>',
+    'Checking graph integrity... <span class="log-ok">1,247 nodes verified</span>',
+    'Benchmarking traversal latency... <span class="log-ok">8.3ms avg</span>',
+    'Validating cache consistency... <span class="log-ok">no drift detected</span>',
+    'Checking for circular dependencies... <span class="log-ok">none found</span>',
+    'Testing edge weight calculations... <span class="log-ok">PASS</span>',
+    'Verifying backup integrity... <span class="log-ok">hash match confirmed</span>',
+    'Scanning for deadlocks in async paths... <span class="log-ok">clean</span>',
+    'API endpoint health check... <span class="log-ok">all responding</span>',
+  ]},
+  { agent:'pm', name:'PathMapper', msgs:[
+    'Analyzing issue <span class="log-file">#142</span>... mapping implementation paths',
+    'Generated 3 suggested approaches for multi-agent memory',
+    'Identified affected files: <span class="log-file">core/graph.py</span>, <span class="log-file">core/sync.py</span>',
+    'Estimating complexity for issue <span class="log-file">#131</span>... <span class="log-warn">HIGH</span>',
+    'Mapping dependency tree for Rust bindings...',
+    'Auto-generated test cases for issue <span class="log-file">#137</span> — decay scoring',
+    'Cross-referencing issue <span class="log-file">#125</span> with Solana SDK docs...',
+    'Suggested implementation path for <span class="log-file">#122</span> — streaming pipeline',
+    'Updated issue <span class="log-file">#134</span> with LOD culling approach',
+    'Flagged <span class="log-file">#128</span> as <span class="log-ok">good-first-issue</span> — docs only',
+  ]},
+];
+
+let agentTimerVal = 60;
+let agentReviewed = 0, agentIssuesFound = 0, agentFilesScanned = 0, agentMapped = 0, agentPathsGen = 0;
+let sweepPhase = 0; // 0=idle cycling, 1=sweep active
+
+function addAgentLog(agentType, msg) {
+  const log = document.getElementById('agentLog');
+  const now = new Date();
+  const ts = now.toTimeString().slice(0,8);
+  const item = document.createElement('div');
+  item.className = 'agent-log-item';
+  item.innerHTML = `<span class="log-ts">${ts}</span><span class="log-agent ${agentType}">[${AGENT_LOG_MSGS.find(a=>a.agent===agentType).name}]</span><span class="log-msg">${msg}</span>`;
+  log.insertBefore(item, log.firstChild);
+  while (log.children.length > 30) log.removeChild(log.lastChild);
+}
+
+function runAgentSweep() {
+  sweepPhase = 1;
+  
+  // Set all agents to scanning
+  document.querySelectorAll('.agent-status').forEach(s => {
+    s.textContent = 'SCANNING';
+    s.className = 'agent-status scanning';
+  });
+
+  // Animate progress bars and emit logs
+  let step = 0;
+  const totalSteps = 15;
+  const sweepInterval = setInterval(() => {
+    step++;
+    const pct = (step / totalSteps * 100).toFixed(0);
+    
+    document.getElementById('agentBar1').style.width = pct + '%';
+    document.getElementById('agentBar2').style.width = Math.min(100, pct * 1.1).toFixed(0) + '%';
+    document.getElementById('agentBar3').style.width = Math.min(100, pct * 0.9).toFixed(0) + '%';
+
+    // Emit log messages
+    if (step % 2 === 0) {
+      const agentGroup = AGENT_LOG_MSGS[step % 3];
+      const msg = agentGroup.msgs[Math.floor(Math.random() * agentGroup.msgs.length)];
+      addAgentLog(agentGroup.agent, msg);
+    }
+
+    // Update counters
+    if (step % 3 === 0) {
+      agentReviewed++;
+      document.getElementById('agentReviewed').textContent = agentReviewed;
+    }
+    if (step % 5 === 0 && Math.random() > 0.6) {
+      agentIssuesFound++;
+      document.getElementById('agentIssues').textContent = agentIssuesFound;
+    }
+    if (step % 2 === 0) {
+      agentFilesScanned += Math.floor(Math.random() * 4) + 1;
+      document.getElementById('agentFiles').textContent = agentFilesScanned;
+    }
+    if (step % 4 === 0) {
+      agentMapped++;
+      document.getElementById('agentMapped').textContent = agentMapped;
+      agentPathsGen += Math.floor(Math.random() * 3) + 1;
+      document.getElementById('agentPaths').textContent = agentPathsGen;
+    }
+
+    if (step >= totalSteps) {
+      clearInterval(sweepInterval);
+      
+      // Complete sweep
+      document.getElementById('agentBar1').style.width = '100%';
+      document.getElementById('agentBar2').style.width = '100%';
+      document.getElementById('agentBar3').style.width = '100%';
+
+      addAgentLog('cr', '<span class="log-ok">✓ Code review sweep complete — all clear</span>');
+      addAgentLog('hc', '<span class="log-ok">✓ Health check sweep complete — system healthy</span>');
+      addAgentLog('pm', '<span class="log-ok">✓ Path mapping sweep complete — guides updated</span>');
+
+      // Reset after a moment
+      setTimeout(() => {
+        document.querySelectorAll('.agent-status').forEach(s => {
+          s.textContent = 'ACTIVE';
+          s.className = 'agent-status active';
+        });
+        document.getElementById('agentBar1').style.width = '0%';
+        document.getElementById('agentBar2').style.width = '0%';
+        document.getElementById('agentBar3').style.width = '0%';
+        sweepPhase = 0;
+        agentTimerVal = 60;
+      }, 2000);
+    }
+  }, 600);
+}
+
+// Countdown timer
+setInterval(() => {
+  if (sweepPhase === 0) {
+    agentTimerVal--;
+    document.getElementById('agentTimer').textContent = agentTimerVal;
+    
+    // Random idle logs between sweeps
+    if (agentTimerVal % 15 === 0 && agentTimerVal > 0) {
+      const idleAgent = AGENT_LOG_MSGS[Math.floor(Math.random() * 3)];
+      addAgentLog(idleAgent.agent, idleAgent.msgs[Math.floor(Math.random() * idleAgent.msgs.length)]);
+    }
+
+    if (agentTimerVal <= 0) {
+      runAgentSweep();
+    }
+  }
+}, 1000);
 
 // ===== BUILD UI =====
 function buildLeaderboard() {
@@ -562,6 +818,15 @@ window.addEventListener('load', () => {
     
     setTimeout(animateStats, 300);
     setInterval(addLiveActivity, 8000);
+
+    // Agent boot sequence
+    setTimeout(() => addAgentLog('cr', 'CodeReview-Agent initialized — monitoring PRs'), 400);
+    setTimeout(() => addAgentLog('hc', 'HealthCheck-Agent initialized — running baseline scan'), 800);
+    setTimeout(() => addAgentLog('pm', 'PathMapper-Agent initialized — indexing open issues'), 1200);
+    setTimeout(() => addAgentLog('hc', '<span class="log-ok">✓ Baseline health check passed</span>'), 2000);
+    setTimeout(() => addAgentLog('pm', 'Mapped 8 open issues with implementation guides'), 2800);
+    // Trigger first sweep sooner for demo
+    setTimeout(() => { agentTimerVal = 12; }, 100);
   }, 1500);
 });
 </script>
